@@ -1,30 +1,19 @@
 import 'package:flutter/material.dart';
-import 'Screens/Splash/splash_screen.dart';
+import 'Screens/Authentication/login_screen.dart';
 
-void
-main() {
-  runApp(
-    const AshwaApp(),
-  );
+void main() {
+  runApp(const AshwaApp());
 }
 
-class AshwaApp
-    extends
-        StatelessWidget {
-  const AshwaApp({
-    super.key,
-  });
+class AshwaApp extends StatelessWidget {
+  const AshwaApp({super.key});
 
   @override
-  Widget
-  build(
-    BuildContext
-    context,
-  ) {
+  Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ASHWA',
-      home: const SplashScreen(),
+      home: const LoginScreen(),
     );
   }
 }
