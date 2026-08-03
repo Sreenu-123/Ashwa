@@ -142,10 +142,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: () {
                       // Handle registration logic
                     },
-                    child: Text(
-                      'Register',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.blue,
@@ -153,9 +149,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
+                    child: Text(
+                      'Register',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
