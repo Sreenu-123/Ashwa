@@ -41,14 +41,25 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   int selectedIndex = 0;
+  void changeTab(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+  }
 
-  final List<Widget> screens = [
-    const HomeScreen(),
-    const RideScreen(),
-    const ProgressScreen(),
-    const LearnScreen(),
-    const ProfileScreen(),
-  ];
+  List<Widget> get screens {
+    return [
+      HomeScreen(
+        onRideTap: () {
+          changeTab(1);
+        },
+      ),
+      const RideScreen(),
+      const ProgressScreen(),
+      const LearnScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
