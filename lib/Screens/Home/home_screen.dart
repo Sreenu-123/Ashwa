@@ -203,6 +203,30 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 25),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Today's Score",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    TextButton(onPressed: () {}, child: const Text("View All")),
+                  ],
+                ),
+                Container(
+                  width: double.infinity,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B1F2A),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
               ],
             ),
           ),
