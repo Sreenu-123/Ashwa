@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class HomeScreen extends StatelessWidget {
   final VoidCallback onRideTap;
   final VoidCallback onLearnTap;
+
   const HomeScreen({
     super.key,
     required this.onRideTap,
@@ -21,6 +22,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                           child: Container(
                             width: 8,
                             height: 8,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
                             ),
@@ -71,15 +73,16 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 30),
+
+                // START A RIDE
                 GestureDetector(
                   onTap: onRideTap,
-
                   child: Container(
                     width: double.infinity,
                     height: 110,
                     padding: const EdgeInsets.all(18),
-
                     decoration: BoxDecoration(
                       color: Colors.blue,
                       borderRadius: BorderRadius.circular(20),
@@ -99,13 +102,15 @@ class HomeScreen extends StatelessWidget {
                             size: 28,
                           ),
                         ),
+
                         const SizedBox(width: 15),
+
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
+                              const Text(
                                 'Start a Ride',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -113,7 +118,10 @@ class HomeScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text(
+
+                              const SizedBox(height: 4),
+
+                              const Text(
                                 'Get Real-time AI coaching',
                                 style: TextStyle(
                                   color: Colors.white70,
@@ -123,6 +131,7 @@ class HomeScreen extends StatelessWidget {
                             ],
                           ),
                         ),
+
                         const CircleAvatar(
                           radius: 22,
                           backgroundColor: Colors.white24,
@@ -136,7 +145,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+
+                const SizedBox(height: 25),
+
+                // LEARN RIDING
                 GestureDetector(
                   onTap: onLearnTap,
                   child: Container(
@@ -178,7 +190,9 @@ class HomeScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+
                               SizedBox(height: 4),
+
                               Text(
                                 "Master horse riding step by step",
                                 style: TextStyle(
@@ -203,7 +217,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 25),
+
+                // TODAY'S SCORE HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -216,149 +233,129 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
 
-                    TextButton(onPressed: () {}, child: const Text("View All")),
+                    TextButton(
+                      onPressed: () {},
+                      child: const Text(
+                        "View All",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
+
+                const SizedBox(height: 8),
+
+                // TODAY'S SCORE CARD
                 Container(
                   width: double.infinity,
-                  height: 190,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 20,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1B1F2A),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.04)),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: const [
-                        // Posture
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 90,
-                              height: 90,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: 0.85,
-                                    strokeWidth: 8,
-                                    color: Colors.green,
-                                    backgroundColor: Colors.white12,
-                                  ),
-                                  Text(
-                                    "85%",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "Posture",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _scoreItem(
+                        value: 0.85,
+                        percentage: "85%",
+                        label: "Posture",
+                        color: Colors.green,
+                      ),
 
-                        // Balance
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 90,
-                              height: 90,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: 0.78,
-                                    strokeWidth: 8,
-                                    color: Colors.amber,
-                                    backgroundColor: Colors.white12,
-                                  ),
-                                  Text(
-                                    "78%",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "Balance",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
+                      _scoreItem(
+                        value: 0.78,
+                        percentage: "78%",
+                        label: "Balance",
+                        color: Colors.amber,
+                      ),
 
-                        // Leg Position
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 90,
-                              height: 90,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: 0.82,
-                                    strokeWidth: 8,
-                                    color: Colors.lightBlue,
-                                    backgroundColor: Colors.white12,
-                                  ),
-                                  Text(
-                                    "82%",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              "Leg Position",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      _scoreItem(
+                        value: 0.82,
+                        percentage: "82%",
+                        label: "Leg Position",
+                        color: Colors.lightBlue,
+                      ),
+                    ],
                   ),
                 ),
+
+                const SizedBox(height: 25),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // SCORE ITEM
+
+  Widget _scoreItem({
+    required double value,
+    required String percentage,
+    required String label,
+    required Color color,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Background circle
+              CircularProgressIndicator(
+                value: 1.0,
+                strokeWidth: 9,
+                color: Colors.white12,
+              ),
+
+              // Progress circle
+              CircularProgressIndicator(
+                value: value,
+                strokeWidth: 9,
+                color: color,
+                strokeCap: StrokeCap.round,
+              ),
+
+              // Percentage
+              Text(
+                percentage,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        SizedBox(
+          width: 95,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
