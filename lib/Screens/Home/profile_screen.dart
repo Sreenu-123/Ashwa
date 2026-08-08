@@ -5,10 +5,171 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.black,
-      body: Center(
-        child: Text('Profile', style: TextStyle(color: Colors.white)),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Profile
+              const CircleAvatar(
+                radius: 48,
+                backgroundColor: Color(0xFF1B1F2A),
+                child: Icon(Icons.person, color: Colors.white, size: 50),
+              ),
+
+              const SizedBox(height: 15),
+
+              const Text(
+                "Rider",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              const Text(
+                "Beginner Rider",
+                style: TextStyle(color: Colors.white60, fontSize: 15),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Stats
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B1F2A),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    profileStat("12", "Rides"),
+                    profileStat("8", "Lessons"),
+                    profileStat("85%", "Best Score"),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Edit Profile
+              profileOption(
+                icon: Icons.edit_outlined,
+                title: "Edit Profile",
+                subtitle: "Update your rider information",
+              ),
+
+              const SizedBox(height: 12),
+
+              // Achievements
+              profileOption(
+                icon: Icons.emoji_events_outlined,
+                title: "Achievements",
+                subtitle: "View your riding achievements",
+              ),
+
+              const SizedBox(height: 12),
+
+              // Settings
+              profileOption(
+                icon: Icons.settings_outlined,
+                title: "Settings",
+                subtitle: "Manage your app preferences",
+              ),
+
+              const SizedBox(height: 12),
+
+              // About
+              profileOption(
+                icon: Icons.info_outline,
+                title: "About ASHWA",
+                subtitle: "Learn more about ASHWA",
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget profileStat(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.blue,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white60, fontSize: 13),
+        ),
+      ],
+    );
+  }
+
+  Widget profileOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B1F2A),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: Colors.blue, size: 24),
+          ),
+
+          const SizedBox(width: 15),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+
+          const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
+        ],
       ),
     );
   }
