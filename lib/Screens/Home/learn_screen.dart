@@ -70,7 +70,17 @@ class LearnScreen extends StatelessWidget {
                 lessons: "3 Lessons",
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+
+              // Horse Care
+              lessonCard(
+                icon: Icons.pets_outlined,
+                title: "Horse Care",
+                subtitle: "Learn how to care for your horse",
+                lessons: "3 Lessons",
+              ),
+
+              const SizedBox(height: 30),
             ],
           ),
         ),
