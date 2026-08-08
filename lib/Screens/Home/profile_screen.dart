@@ -55,6 +55,7 @@ class ProfileScreen extends StatelessWidget {
                     profileStat("12", "Rides"),
                     profileStat("8", "Lessons"),
                     profileStat("85%", "Best Score"),
+                    profileStat("7 Days", "Streaks"),
                   ],
                 ),
               ),
