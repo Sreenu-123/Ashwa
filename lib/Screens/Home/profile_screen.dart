@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'settings_screen.dart';
+import '../Profile/settings_screen.dart';
+import '../Profile/edit_profile_screen.dart';
+import '../Profile/achievement_screen.dart';
+import '../Profile/about_ashwa_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -67,6 +70,14 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.edit_outlined,
                 title: "Edit Profile",
                 subtitle: "Update your rider information",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen(),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 12),
@@ -76,6 +87,14 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.emoji_events_outlined,
                 title: "Achievements",
                 subtitle: "View your riding achievements",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AchievementsScreen(),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 12),
@@ -102,6 +121,14 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.info_outline,
                 title: "About ASHWA",
                 subtitle: "Learn more about ASHWA",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AboutAshwaScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),

@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import '../Home/main_navigation_screen.dart';
+import './forget_password_screen.dart';
+import './register_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool obscurePassword = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,6 +39,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 25),
                 TextFormField(
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                   decoration: InputDecoration(
                     hintText: 'Email',
                     prefixIcon: Icon(Icons.email),
@@ -50,10 +60,25 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 15),
                 TextFormField(
-                  obscureText: true,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  obscureText: obscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    prefixIcon: Icon(Icons.lock),
+                    prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          obscurePassword = !obscurePassword;
+                        });
+                      },
+                    ),
                     filled: true,
                     fillColor: Colors.grey[900],
                     border: OutlineInputBorder(
@@ -74,6 +99,12 @@ class LoginScreen extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgetPasswordScreen(),
+                        ),
+                      );
                       // Handle forgot password
                     },
                     child: Text(
@@ -87,6 +118,12 @@ class LoginScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NavigationScreen(),
+                        ),
+                      );
                       // Handle login
                     },
                     style: ElevatedButton.styleFrom(
@@ -175,6 +212,12 @@ class LoginScreen extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
+                        );
                         // Handle sign up
                       },
                       child: Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Authentication/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -165,6 +166,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     TextButton(
                       onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                        );
                         // Navigate to login screen
                       },
                       child: Text(

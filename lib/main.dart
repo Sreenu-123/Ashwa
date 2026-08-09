@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Screens/Home/main_navigation_screen.dart';
+import 'Screens/Splash/splash_screen.dart';
 
 void main() {
   runApp(const AshwaApp());
@@ -13,7 +13,7 @@ class AshwaApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ASHWA',
-      home: const NavigationScreen(),
+      home: const SplashScreen(),
     );
   }
 }

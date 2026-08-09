@@ -1,31 +1,29 @@
 import 'package:flutter/material.dart';
+import '../Authentication/login_screen.dart';
 
-class SplashScreen
-    extends
-        StatefulWidget {
-  const SplashScreen({
-    super.key,
-  });
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  State<
-    SplashScreen
-  >
-  createState() =>
-      _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState
-    extends
-        State<
-          SplashScreen
-        > {
+class _SplashScreenState extends State<SplashScreen> {
   @override
-  Widget
-  build(
-    BuildContext
-    context,
-  ) {
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    });
+  }
+
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -47,25 +45,15 @@ class _SplashScreenState
               children: [
                 Text(
                   'Ashwa',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 33,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 33),
                 ),
 
-                SizedBox(
-                  height: 0,
-                ),
+                SizedBox(height: 0),
 
                 Text(
                   'Your Intelligent Horse Riding Trainer',
                   style: TextStyle(
-                    color: Color.fromARGB(
-                      255,
-                      198,
-                      197,
-                      197,
-                    ),
+                    color: Color.fromARGB(255, 198, 197, 197),
                     fontSize: 13,
                   ),
                 ),
