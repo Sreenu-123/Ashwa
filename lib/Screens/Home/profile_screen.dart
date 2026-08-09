@@ -5,7 +5,8 @@ import '../Profile/achievement_screen.dart';
 import '../Profile/about_ashwa_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  const ProfileScreen({super.key, required this.onThemeChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +109,12 @@ class ProfileScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
+                      builder: (context) => SettingsScreen(
+                        onThemeChanged: (mode) {
+                          onThemeChanged(mode);
+                          // Handle theme change if needed
+                        },
+                      ),
                     ),
                   );
                 },

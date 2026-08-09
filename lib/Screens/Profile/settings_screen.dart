@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  const SettingsScreen({super.key, required this.onThemeChanged});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -20,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -128,6 +129,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() {
                             appearance = value;
                           });
+                          if (value == 'Dark') {
+                            widget.onThemeChanged(ThemeMode.dark);
+                          } else if (value == 'Light') {
+                            widget.onThemeChanged(ThemeMode.light);
+                          } else {
+                            widget.onThemeChanged(ThemeMode.system);
+                          }
                         },
                       );
                     },

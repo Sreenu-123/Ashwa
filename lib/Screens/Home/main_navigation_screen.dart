@@ -6,7 +6,8 @@ import 'learn_screen.dart';
 import 'profile_screen.dart';
 
 class NavigationScreen extends StatefulWidget {
-  const NavigationScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  const NavigationScreen({super.key, required this.onThemeChanged});
 
   @override
   State<NavigationScreen> createState() => _NavigationScreenState();
@@ -60,7 +61,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
       const RideScreen(),
       const ProgressScreen(),
       const LearnScreen(),
-      const ProfileScreen(),
+      ProfileScreen(onThemeChanged: widget.onThemeChanged),
     ];
   }
 

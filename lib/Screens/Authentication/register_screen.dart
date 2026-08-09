@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../Authentication/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  const RegisterScreen({super.key, required this.onThemeChanged});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -169,7 +170,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
+                            builder: (context) => LoginScreen(
+                              onThemeChanged: widget.onThemeChanged,
+                            ),
                           ),
                         );
                         // Navigate to login screen

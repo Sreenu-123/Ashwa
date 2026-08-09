@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../Authentication/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  const SplashScreen({super.key, required this.onThemeChanged});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -18,7 +19,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (context) =>
+              LoginScreen(onThemeChanged: widget.onThemeChanged),
+        ),
       );
     });
   }

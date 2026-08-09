@@ -4,7 +4,9 @@ import './forget_password_screen.dart';
 import './register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+
+  const LoginScreen({super.key, required this.onThemeChanged});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -121,7 +123,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const NavigationScreen(),
+                          builder: (context) => NavigationScreen(
+                            onThemeChanged: widget.onThemeChanged,
+
+                            // Handle theme change if needed
+                          ),
                         ),
                       );
                       // Handle login
@@ -215,7 +221,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
+                            builder: (context) => RegisterScreen(
+                              onThemeChanged: widget.onThemeChanged,
+                            ),
                           ),
                         );
                         // Handle sign up
