@@ -1,26 +1,44 @@
 import 'package:flutter/material.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  final String name;
+  final String email;
+  final String age;
+  final String horseName;
+  final String ridingLevel;
+
+  const EditProfileScreen({
+    super.key,
+    required this.name,
+    required this.email,
+    required this.age,
+    required this.horseName,
+    required this.ridingLevel,
+  });
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final TextEditingController nameController = TextEditingController(
-    text: 'Rider',
-  );
+  late final TextEditingController nameController;
+  late final TextEditingController emailController;
+  late final TextEditingController ageController;
+  late final TextEditingController horseController;
 
-  final TextEditingController emailController = TextEditingController(
-    text: 'rider@example.com',
-  );
+  late String ridingLevel;
 
-  final TextEditingController ageController = TextEditingController(text: '20');
+  @override
+  void initState() {
+    super.initState();
 
-  final TextEditingController horseController = TextEditingController(text: '');
+    nameController = TextEditingController(text: widget.name);
+    emailController = TextEditingController(text: widget.email);
+    ageController = TextEditingController(text: widget.age);
+    horseController = TextEditingController(text: widget.horseName);
 
-  String ridingLevel = 'Beginner';
+    ridingLevel = widget.ridingLevel;
+  }
 
   @override
   void dispose() {
@@ -28,10 +46,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     emailController.dispose();
     ageController.dispose();
     horseController.dispose();
+
     super.dispose();
   }
 
+  // ================= SAVE PROFILE =================
+
   void saveProfile() {
+    final updatedProfile = {
+      'name': nameController.text.trim(),
+      'email': emailController.text.trim(),
+      'age': ageController.text.trim(),
+      'horseName': horseController.text.trim(),
+      'ridingLevel': ridingLevel,
+    };
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Profile updated successfully'),
@@ -39,7 +68,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
 
-    Navigator.pop(context);
+    Navigator.pop(context, updatedProfile);
   }
 
   @override
@@ -49,6 +78,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
+      // ================= APP BAR =================
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
@@ -57,6 +87,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: () {
             Navigator.pop(context);
           },
+
           icon: Icon(
             Icons.arrow_back_ios_new,
             color: colorScheme.onSurface,
@@ -76,10 +107,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         centerTitle: false,
       ),
 
+      // ================= BODY =================
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -90,10 +124,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Container(
                       width: 105,
                       height: 105,
+
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                       ),
+
                       child: Icon(
                         Icons.person,
                         color: colorScheme.onSurface,
@@ -104,17 +140,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Positioned(
                       right: 0,
                       bottom: 2,
+
                       child: Container(
                         width: 34,
                         height: 34,
+
                         decoration: BoxDecoration(
                           color: Colors.blue,
                           shape: BoxShape.circle,
+
                           border: Border.all(
                             color: colorScheme.surface,
                             width: 3,
                           ),
                         ),
+
                         child: const Icon(
                           Icons.camera_alt_outlined,
                           color: Colors.white,
@@ -131,6 +171,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Center(
                 child: Text(
                   'Change Profile Photo',
+
                   style: const TextStyle(
                     color: Colors.blue,
                     fontSize: 14,
@@ -144,6 +185,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // ================= PERSONAL INFORMATION =================
               Text(
                 'Personal Information',
+
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 18,
@@ -153,6 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // Name
               profileField(
                 controller: nameController,
                 label: 'Name',
@@ -161,6 +204,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // Email
               profileField(
                 controller: emailController,
                 label: 'Email',
@@ -170,6 +214,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // Age
               profileField(
                 controller: ageController,
                 label: 'Age',
@@ -182,6 +227,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // ================= RIDING INFORMATION =================
               Text(
                 'Riding Information',
+
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 18,
@@ -195,12 +241,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainer,
+
                   borderRadius: BorderRadius.circular(14),
+
                   border: Border.all(
                     color: colorScheme.outlineVariant,
                     width: 1,
                   ),
                 ),
+
                 child: DropdownButtonFormField<String>(
                   initialValue: ridingLevel,
 
@@ -236,14 +285,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       value: 'Beginner',
                       child: Text('Beginner'),
                     ),
+
                     DropdownMenuItem(
                       value: 'Intermediate',
                       child: Text('Intermediate'),
                     ),
+
                     DropdownMenuItem(
                       value: 'Advanced',
                       child: Text('Advanced'),
                     ),
+
                     DropdownMenuItem(
                       value: 'Professional',
                       child: Text('Professional'),
@@ -262,6 +314,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // Horse Name
               profileField(
                 controller: horseController,
                 label: 'Horse Name',
@@ -274,6 +327,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 55,
+
                 child: ElevatedButton(
                   onPressed: saveProfile,
 
@@ -289,6 +343,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   child: const Text(
                     'Save Changes',
+
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -300,6 +355,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 50,
+
                 child: TextButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -307,6 +363,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   child: Text(
                     'Cancel',
+
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 15,
@@ -333,6 +390,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return TextField(
       controller: controller,
+
       keyboardType: keyboardType,
 
       style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
@@ -352,11 +410,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
+
           borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
+
           borderSide: const BorderSide(color: Colors.blue, width: 1.5),
         ),
       ),

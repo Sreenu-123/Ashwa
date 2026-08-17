@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
+
 import '../Profile/settings_screen.dart';
 import '../Profile/edit_profile_screen.dart';
 import '../Profile/achievement_screen.dart';
 import '../Profile/about_ashwa_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
 
   const ProfileScreen({super.key, required this.onThemeChanged});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  // ================= PROFILE DATA =================
+
+  String name = 'Rider';
+  String email = 'rider@example.com';
+  String age = '20';
+  String horseName = '';
+  String ridingLevel = 'Beginner';
+
+  // ================= BUILD =================
 
   @override
   Widget build(BuildContext context) {
@@ -19,13 +35,17 @@ class ProfileScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+
           padding: const EdgeInsets.all(20),
+
           child: Column(
             children: [
               // ================= PROFILE =================
               CircleAvatar(
                 radius: 48,
+
                 backgroundColor: colorScheme.surfaceContainer,
+
                 child: Icon(
                   Icons.person,
                   color: colorScheme.onSurface,
@@ -36,7 +56,8 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 15),
 
               Text(
-                'Rider',
+                name,
+
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 24,
@@ -47,7 +68,8 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 5),
 
               Text(
-                'Beginner Rider',
+                '$ridingLevel Rider',
+
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 15,
@@ -59,18 +81,25 @@ class ProfileScreen extends StatelessWidget {
               // ================= STATS =================
               Container(
                 width: double.infinity,
+
                 padding: const EdgeInsets.symmetric(vertical: 20),
+
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainer,
+
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
+
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+
                   children: [
                     profileStat(context, '12', 'Rides'),
+
                     profileStat(context, '8', 'Lessons'),
+
                     profileStat(context, '85%', 'Best Score'),
+
                     profileStat(context, '7 Days', 'Streaks'),
                   ],
                 ),
@@ -81,16 +110,37 @@ class ProfileScreen extends StatelessWidget {
               // ================= EDIT PROFILE =================
               profileOption(
                 context: context,
+
                 icon: Icons.edit_outlined,
+
                 title: 'Edit Profile',
+
                 subtitle: 'Update your rider information',
-                onTap: () {
-                  Navigator.push(
+
+                onTap: () async {
+                  final result = await Navigator.push(
                     context,
+
                     MaterialPageRoute(
-                      builder: (context) => const EditProfileScreen(),
+                      builder: (context) => EditProfileScreen(
+                        name: name,
+                        email: email,
+                        age: age,
+                        horseName: horseName,
+                        ridingLevel: ridingLevel,
+                      ),
                     ),
                   );
+
+                  if (result != null && result is Map) {
+                    setState(() {
+                      name = result['name'] ?? name;
+                      email = result['email'] ?? email;
+                      age = result['age'] ?? age;
+                      horseName = result['horseName'] ?? horseName;
+                      ridingLevel = result['ridingLevel'] ?? ridingLevel;
+                    });
+                  }
                 },
               ),
 
@@ -99,12 +149,17 @@ class ProfileScreen extends StatelessWidget {
               // ================= ACHIEVEMENTS =================
               profileOption(
                 context: context,
+
                 icon: Icons.emoji_events_outlined,
+
                 title: 'Achievements',
+
                 subtitle: 'View your riding achievements',
+
                 onTap: () {
                   Navigator.push(
                     context,
+
                     MaterialPageRoute(
                       builder: (context) => const AchievementsScreen(),
                     ),
@@ -117,16 +172,21 @@ class ProfileScreen extends StatelessWidget {
               // ================= SETTINGS =================
               profileOption(
                 context: context,
+
                 icon: Icons.settings_outlined,
+
                 title: 'Settings',
+
                 subtitle: 'Manage your app preferences',
+
                 onTap: () {
                   Navigator.push(
                     context,
+
                     MaterialPageRoute(
                       builder: (context) => SettingsScreen(
                         onThemeChanged: (mode) {
-                          onThemeChanged(mode);
+                          widget.onThemeChanged(mode);
                         },
                       ),
                     ),
@@ -139,12 +199,17 @@ class ProfileScreen extends StatelessWidget {
               // ================= ABOUT =================
               profileOption(
                 context: context,
+
                 icon: Icons.info_outline,
+
                 title: 'About ASHWA',
+
                 subtitle: 'Learn more about ASHWA',
+
                 onTap: () {
                   Navigator.push(
                     context,
+
                     MaterialPageRoute(
                       builder: (context) => const AboutAshwaScreen(),
                     ),
@@ -167,6 +232,7 @@ class ProfileScreen extends StatelessWidget {
       children: [
         Text(
           value,
+
           style: const TextStyle(
             color: Colors.blue,
             fontSize: 20,
@@ -178,6 +244,7 @@ class ProfileScreen extends StatelessWidget {
 
         Text(
           label,
+
           style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
       ],
@@ -197,24 +264,33 @@ class ProfileScreen extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+
       child: Container(
         width: double.infinity,
+
         padding: const EdgeInsets.all(17),
+
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
+
           borderRadius: BorderRadius.circular(18),
+
           border: Border.all(color: colorScheme.outlineVariant),
         ),
+
         child: Row(
           children: [
             // ================= ICON =================
             Container(
               width: 48,
               height: 48,
+
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.15),
+
                 borderRadius: BorderRadius.circular(14),
               ),
+
               child: Icon(icon, color: Colors.blue, size: 24),
             ),
 
@@ -224,9 +300,11 @@ class ProfileScreen extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+
                 children: [
                   Text(
                     title,
+
                     style: TextStyle(
                       color: colorScheme.onSurface,
                       fontSize: 16,
@@ -238,6 +316,7 @@ class ProfileScreen extends StatelessWidget {
 
                   Text(
                     subtitle,
+
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 13,
