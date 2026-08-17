@@ -37,19 +37,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_ios_new,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       size: 22,
                     ),
                   ),
 
                   const SizedBox(width: 4),
 
-                  const Text(
+                  Text(
                     'Settings',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
@@ -67,9 +67,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   settingsTile(
                     icon: Icons.person_outline,
                     title: 'Profile Information',
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.chevron_right,
-                      color: Colors.white70,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onTap: () {},
                   ),
@@ -230,9 +230,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   settingsTile(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Privacy Policy',
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.chevron_right,
-                      color: Colors.white70,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onTap: () {},
                   ),
@@ -242,9 +242,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   settingsTile(
                     icon: Icons.description_outlined,
                     title: 'Terms & Conditions',
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.chevron_right,
-                      color: Colors.white70,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onTap: () {},
                   ),
@@ -254,9 +254,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   settingsTile(
                     icon: Icons.help_outline,
                     title: 'Help & Support',
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.chevron_right,
-                      color: Colors.white70,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onTap: () {},
                   ),
@@ -273,9 +273,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   settingsTile(
                     icon: Icons.info_outline,
                     title: 'About ASHWA',
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.chevron_right,
-                      color: Colors.white70,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onTap: () {},
                   ),
@@ -306,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     vertical: 17,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B1F2A),
+                    color: Theme.of(context).colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: Colors.red.withOpacity(0.25)),
                   ),
@@ -355,8 +355,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -370,7 +370,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF111827),
+        color: Theme.of(context).colorScheme.outlineVariant,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white10),
       ),
@@ -408,8 +408,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -419,7 +419,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (trailingText != null)
               Text(
                 trailingText,
-                style: const TextStyle(color: Colors.white70, fontSize: 14),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
               ),
 
             if (trailing != null) ...[const SizedBox(width: 8), trailing],
@@ -432,9 +435,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ================= DIVIDER =================
 
   Widget divider() {
-    return const Divider(
+    return Divider(
       height: 1,
-      color: Colors.white10,
+      color: Theme.of(context).colorScheme.outlineVariant,
       indent: 16,
       endIndent: 16,
     );
@@ -452,8 +455,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1B1F2A),
-          title: Text(title, style: const TextStyle(color: Colors.white)),
+          backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+          title: Text(
+            title,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: options.map((option) {
@@ -463,7 +469,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 activeColor: Colors.blue,
                 title: Text(
                   option,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 onChanged: (value) {
                   if (value != null) {
@@ -486,11 +494,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1B1F2A),
-          title: const Text('Logout', style: TextStyle(color: Colors.white)),
-          content: const Text(
+          backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+          title: Text(
+            'Logout',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           actions: [
             TextButton(
