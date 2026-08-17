@@ -5,26 +5,31 @@ class AboutAshwaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
+
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
         ),
-        title: const Text(
+
+        title: Text(
           'About ASHWA',
           style: TextStyle(
-            color: Colors.white,
+            color: colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
+
         centerTitle: false,
       ),
 
@@ -35,12 +40,12 @@ class AboutAshwaScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 20),
 
-              // ASHWA Logo
+              // ================= ASHWA LOGO =================
               Container(
                 width: 110,
                 height: 110,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B1F2A),
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 padding: const EdgeInsets.all(18),
@@ -52,11 +57,11 @@ class AboutAshwaScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // App Name
-              const Text(
+              // ================= APP NAME =================
+              Text(
                 'ASHWA',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
@@ -65,16 +70,20 @@ class AboutAshwaScreen extends StatelessWidget {
 
               const SizedBox(height: 6),
 
-              const Text(
+              Text(
                 'Your Intelligent Horse Riding Trainer',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60, fontSize: 14),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
               ),
 
               const SizedBox(height: 30),
 
-              // About Card
+              // ================= ABOUT =================
               _infoCard(
+                context: context,
                 icon: Icons.info_outline,
                 title: 'About ASHWA',
                 description:
@@ -83,8 +92,9 @@ class AboutAshwaScreen extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              // Features
+              // ================= FEATURES =================
               _infoCard(
+                context: context,
                 icon: Icons.auto_awesome,
                 title: 'Features',
                 description:
@@ -96,8 +106,9 @@ class AboutAshwaScreen extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              // Mission
+              // ================= GOAL =================
               _infoCard(
+                context: context,
                 icon: Icons.flag_outlined,
                 title: 'Our Goal',
                 description:
@@ -106,20 +117,24 @@ class AboutAshwaScreen extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              // Version
+              // ================= VERSION =================
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B1F2A),
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.phone_android, color: Colors.blue, size: 28),
+                    const Icon(
+                      Icons.phone_android,
+                      color: Colors.blue,
+                      size: 28,
+                    ),
 
-                    SizedBox(width: 15),
+                    const SizedBox(width: 15),
 
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,17 +142,20 @@ class AboutAshwaScreen extends StatelessWidget {
                         Text(
                           'Version',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
 
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
 
                         Text(
                           '1.0.0',
-                          style: TextStyle(color: Colors.white60, fontSize: 14),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -147,9 +165,12 @@ class AboutAshwaScreen extends StatelessWidget {
 
               const SizedBox(height: 35),
 
-              const Text(
+              Text(
                 'Made with ❤️ for Horse Riders',
-                style: TextStyle(color: Colors.white38, fontSize: 13),
+                style: TextStyle(
+                  color: colorScheme.onSurface.withValues(alpha: 0.38),
+                  fontSize: 13,
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -160,22 +181,28 @@ class AboutAshwaScreen extends StatelessWidget {
     );
   }
 
+  // ================= INFO CARD =================
+
   static Widget _infoCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String description,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1F2A),
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ================= ICON =================
           Container(
             width: 48,
             height: 48,
@@ -188,14 +215,15 @@ class AboutAshwaScreen extends StatelessWidget {
 
           const SizedBox(width: 15),
 
+          // ================= CONTENT =================
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
@@ -205,8 +233,8 @@ class AboutAshwaScreen extends StatelessWidget {
 
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.white60,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                     height: 1.5,
                   ),

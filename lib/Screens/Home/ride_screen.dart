@@ -5,8 +5,11 @@ class RideScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -15,24 +18,27 @@ class RideScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Bar
+                // ================= TOP BAR =================
                 Row(
                   children: [
                     const SizedBox(width: 4),
-                    const Text(
+
+                    Text(
                       'AI Ride',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const Spacer(),
+
                     IconButton(
                       onPressed: () {},
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.settings_outlined,
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -40,14 +46,14 @@ class RideScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Camera Placeholder
+                // ================= CAMERA PLACEHOLDER =================
                 Container(
                   width: double.infinity,
                   height: 420,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF111827),
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white10),
+                    border: Border.all(color: colorScheme.outlineVariant),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -56,7 +62,7 @@ class RideScreen extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.15),
+                          color: Colors.blue.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -68,10 +74,10 @@ class RideScreen extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
-                      const Text(
+                      Text(
                         'Camera Ready',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -79,10 +85,13 @@ class RideScreen extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      const Text(
+                      Text(
                         'Position the rider and horse\ninside the frame',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white60, fontSize: 14),
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -90,7 +99,7 @@ class RideScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Start Ride Button
+                // ================= START RIDE BUTTON =================
                 SizedBox(
                   width: double.infinity,
                   height: 60,
@@ -107,7 +116,9 @@ class RideScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.play_arrow_rounded),
+
                         SizedBox(width: 8),
+
                         Text(
                           'Start AI Ride',
                           style: TextStyle(
@@ -122,19 +133,25 @@ class RideScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Info Card
+                // ================= INFO CARD =================
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF111827),
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white10),
+                    border: Border.all(color: colorScheme.outlineVariant),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.auto_awesome, color: Colors.blue, size: 28),
-                      SizedBox(width: 14),
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.blue,
+                        size: 28,
+                      ),
+
+                      const SizedBox(width: 14),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,16 +159,18 @@ class RideScreen extends StatelessWidget {
                             Text(
                               'AI Coaching',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: colorScheme.onSurface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 5),
+
+                            const SizedBox(height: 5),
+
                             Text(
                               'Get real-time riding feedback and posture analysis.',
                               style: TextStyle(
-                                color: Colors.white60,
+                                color: colorScheme.onSurfaceVariant,
                                 fontSize: 13,
                               ),
                             ),
@@ -161,6 +180,8 @@ class RideScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 20),
               ],
             ),
           ),

@@ -44,30 +44,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
+
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: colorScheme.onSurface,
             size: 21,
           ),
         ),
-        title: const Text(
+
+        title: Text(
           'Edit Profile',
           style: TextStyle(
-            color: Colors.white,
+            color: colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
+
         centerTitle: false,
       ),
 
@@ -78,20 +83,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Picture
+              // ================= PROFILE PICTURE =================
               Center(
                 child: Stack(
                   children: [
                     Container(
                       width: 105,
                       height: 105,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF1B1F2A),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person,
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                         size: 58,
                       ),
                     ),
@@ -105,7 +110,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         decoration: BoxDecoration(
                           color: Colors.blue,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black, width: 3),
+                          border: Border.all(
+                            color: colorScheme.surface,
+                            width: 3,
+                          ),
                         ),
                         child: const Icon(
                           Icons.camera_alt_outlined,
@@ -120,10 +128,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 12),
 
-              const Center(
+              Center(
                 child: Text(
                   'Change Profile Photo',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.blue,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -133,11 +141,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 30),
 
-              // Personal Information
-              const Text(
+              // ================= PERSONAL INFORMATION =================
+              Text(
                 'Personal Information',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -171,11 +179,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 28),
 
-              // Riding Information
-              const Text(
+              // ================= RIDING INFORMATION =================
+              Text(
                 'Riding Information',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -183,31 +191,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // Riding Level
+              // ================= RIDING LEVEL =================
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B1B1F),
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.shade800, width: 1),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant,
+                    width: 1,
+                  ),
                 ),
                 child: DropdownButtonFormField<String>(
-                  value: ridingLevel,
-                  dropdownColor: const Color(0xFF1B1F2A),
-                  icon: const Icon(
+                  initialValue: ridingLevel,
+
+                  dropdownColor: colorScheme.surface,
+
+                  icon: Icon(
                     Icons.keyboard_arrow_down,
-                    color: Colors.grey,
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.trending_up, color: Colors.blue),
+
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.trending_up,
+                      color: Colors.blue,
+                    ),
+
                     labelText: 'Riding Level',
-                    labelStyle: TextStyle(color: Colors.grey),
+
+                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
+
+                    contentPadding: const EdgeInsets.symmetric(
                       vertical: 17,
                       horizontal: 5,
                     ),
                   ),
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
+
                   items: const [
                     DropdownMenuItem(
                       value: 'Beginner',
@@ -226,6 +249,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Text('Professional'),
                     ),
                   ],
+
                   onChanged: (value) {
                     if (value != null) {
                       setState(() {
@@ -246,20 +270,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 35),
 
-              // Save Button
+              // ================= SAVE BUTTON =================
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
                   onPressed: saveProfile,
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                     elevation: 0,
+
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
+
                   child: const Text(
                     'Save Changes',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
@@ -269,7 +296,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // Cancel
+              // ================= CANCEL =================
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -277,9 +304,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text(
+
+                  child: Text(
                     'Cancel',
-                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -290,27 +321,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // ================= PROFILE FIELD =================
+
   Widget profileField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
+
+      style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
+
       cursorColor: Colors.blue,
+
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.grey),
+
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+
         prefixIcon: Icon(icon, color: Colors.blue),
+
         filled: true,
-        fillColor: const Color(0xFF1B1B1F),
+
+        fillColor: colorScheme.surfaceContainer,
+
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade800),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
+
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Colors.blue, width: 1.5),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
+
   const SettingsScreen({super.key, required this.onThemeChanged});
 
   @override
@@ -20,6 +21,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -29,8 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back Button
-              // Header
+              // ================= HEADER =================
               Row(
                 children: [
                   IconButton(
@@ -39,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     icon: Icon(
                       Icons.arrow_back_ios_new,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurface,
                       size: 22,
                     ),
                   ),
@@ -49,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     'Settings',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurface,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
@@ -69,7 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Profile Information',
                     trailing: Icon(
                       Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     onTap: () {},
                   ),
@@ -129,6 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() {
                             appearance = value;
                           });
+
                           if (value == 'Dark') {
                             widget.onThemeChanged(ThemeMode.dark);
                           } else if (value == 'Light') {
@@ -232,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Privacy Policy',
                     trailing: Icon(
                       Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     onTap: () {},
                   ),
@@ -244,7 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Terms & Conditions',
                     trailing: Icon(
                       Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     onTap: () {},
                   ),
@@ -256,7 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Help & Support',
                     trailing: Icon(
                       Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     onTap: () {},
                   ),
@@ -275,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'About ASHWA',
                     trailing: Icon(
                       Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     onTap: () {},
                   ),
@@ -306,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     vertical: 17,
                   ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outlineVariant,
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: Colors.red.withOpacity(0.25)),
                   ),
@@ -329,11 +332,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               const SizedBox(height: 30),
 
+              // ================= APP NAME =================
               Center(
                 child: Text(
                   'ASHWA AI',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.35),
+                    color: colorScheme.onSurface.withOpacity(0.35),
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -351,12 +355,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ================= SECTION TITLE =================
 
   Widget sectionTitle(String title) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
         title,
         style: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface,
+          color: colorScheme.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -367,12 +373,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ================= SETTINGS CARD =================
 
   Widget settingsCard({required List<Widget> children}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.outlineVariant,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(children: children),
     );
@@ -387,6 +395,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String? trailingText,
     VoidCallback? onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -409,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: colorScheme.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -420,7 +430,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 trailingText,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 14,
                 ),
               ),
@@ -435,9 +445,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ================= DIVIDER =================
 
   Widget divider() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Divider(
       height: 1,
-      color: Theme.of(context).colorScheme.outlineVariant,
+      color: colorScheme.outlineVariant,
       indent: 16,
       endIndent: 16,
     );
@@ -451,15 +463,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String selectedValue,
     required Function(String) onSelected,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.outlineVariant,
-          title: Text(
-            title,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
+          backgroundColor: colorScheme.surface,
+
+          title: Text(title, style: TextStyle(color: colorScheme.onSurface)),
+
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: options.map((option) {
@@ -467,12 +480,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: option,
                 groupValue: selectedValue,
                 activeColor: Colors.blue,
+
                 title: Text(
                   option,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                  style: TextStyle(color: colorScheme.onSurface),
                 ),
+
                 onChanged: (value) {
                   if (value != null) {
                     onSelected(value);
@@ -487,24 +500,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ================= LOGOUT =================
+  // ================= LOGOUT DIALOG =================
 
   void showLogoutDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.outlineVariant,
-          title: Text(
-            'Logout',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
+          backgroundColor: colorScheme.surface,
+
+          title: Text('Logout', style: TextStyle(color: colorScheme.onSurface)),
+
           content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
+
           actions: [
             TextButton(
               onPressed: () {
@@ -512,6 +525,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               child: const Text('Cancel'),
             ),
+
             TextButton(
               onPressed: () {
                 Navigator.pop(context);

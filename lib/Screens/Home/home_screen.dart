@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final VoidCallback onRideTap;
   final VoidCallback onLearnTap;
 
@@ -11,9 +11,17 @@ class HomeScreen extends StatelessWidget {
   });
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -22,37 +30,43 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // HEADER
+                // ================= HEADER =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Hello, Rider 👋',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 10),
+
+                        const SizedBox(height: 10),
+
                         Text(
                           'Ready for your next ride?',
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
 
+                    // Notification
                     Stack(
                       children: [
                         IconButton(
                           onPressed: () {},
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.notifications_none,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             size: 30,
                           ),
                         ),
@@ -76,9 +90,9 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // START A RIDE
+                // ================= START A RIDE =================
                 GestureDetector(
-                  onTap: onRideTap,
+                  onTap: widget.onRideTap,
                   child: Container(
                     width: double.infinity,
                     height: 110,
@@ -93,7 +107,7 @@ class HomeScreen extends StatelessWidget {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: const Icon(
@@ -109,8 +123,8 @@ class HomeScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
+                            children: const [
+                              Text(
                                 'Start a Ride',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -119,9 +133,9 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
 
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
 
-                              const Text(
+                              Text(
                                 'Get Real-time AI coaching',
                                 style: TextStyle(
                                   color: Colors.white70,
@@ -148,16 +162,17 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                // LEARN RIDING
+                // ================= LEARN RIDING =================
                 GestureDetector(
-                  onTap: onLearnTap,
+                  onTap: widget.onLearnTap,
                   child: Container(
                     width: double.infinity,
                     height: 110,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B1F2A),
+                      color: colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: colorScheme.outlineVariant),
                     ),
                     child: Row(
                       children: [
@@ -165,38 +180,40 @@ class HomeScreen extends StatelessWidget {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.menu_book_outlined,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             size: 26,
                           ),
                         ),
 
                         const SizedBox(width: 15),
 
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Learn Riding",
+                                'Learn Riding',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: colorScheme.onSurface,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
 
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
 
                               Text(
-                                "Master horse riding step by step",
+                                'Master horse riding step by step',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: colorScheme.onSurfaceVariant,
                                   fontSize: 14,
                                 ),
                               ),
@@ -204,12 +221,14 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
 
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 22,
-                          backgroundColor: Colors.white24,
+                          backgroundColor: colorScheme.onSurface.withValues(
+                            alpha: 0.08,
+                          ),
                           child: Icon(
                             Icons.arrow_forward_ios,
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             size: 18,
                           ),
                         ),
@@ -220,14 +239,14 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                // TODAY'S SCORE HEADER
+                // ================= TODAY'S SCORE HEADER =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Today's Score",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -236,7 +255,7 @@ class HomeScreen extends StatelessWidget {
                     TextButton(
                       onPressed: () {},
                       child: const Text(
-                        "View All",
+                        'View All',
                         style: TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.w600,
@@ -248,7 +267,7 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // TODAY'S SCORE CARD
+                // ================= TODAY'S SCORE CARD =================
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -256,31 +275,34 @@ class HomeScreen extends StatelessWidget {
                     vertical: 20,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B1F2A),
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.04)),
+                    border: Border.all(color: colorScheme.outlineVariant),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _scoreItem(
+                        context: context,
                         value: 0.85,
-                        percentage: "85%",
-                        label: "Posture",
+                        percentage: '85%',
+                        label: 'Posture',
                         color: Colors.green,
                       ),
 
                       _scoreItem(
+                        context: context,
                         value: 0.78,
-                        percentage: "78%",
-                        label: "Balance",
+                        percentage: '78%',
+                        label: 'Balance',
                         color: Colors.amber,
                       ),
 
                       _scoreItem(
+                        context: context,
                         value: 0.82,
-                        percentage: "82%",
-                        label: "Leg Position",
+                        percentage: '82%',
+                        label: 'Leg Position',
                         color: Colors.lightBlue,
                       ),
                     ],
@@ -296,14 +318,16 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // SCORE ITEM
-
+  // ================= SCORE ITEM =================
   Widget _scoreItem({
+    required BuildContext context,
     required double value,
     required String percentage,
     required String label,
     required Color color,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -317,7 +341,7 @@ class HomeScreen extends StatelessWidget {
               CircularProgressIndicator(
                 value: 1.0,
                 strokeWidth: 9,
-                color: Colors.white12,
+                color: colorScheme.onSurface.withValues(alpha: 0.08),
               ),
 
               // Progress circle
@@ -331,8 +355,8 @@ class HomeScreen extends StatelessWidget {
               // Percentage
               Text(
                 percentage,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -348,8 +372,8 @@ class HomeScreen extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),

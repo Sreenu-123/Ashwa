@@ -6,31 +6,39 @@ import '../Profile/about_ashwa_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final Function(ThemeMode) onThemeChanged;
+
   const ProfileScreen({super.key, required this.onThemeChanged});
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Profile
-              const CircleAvatar(
+              // ================= PROFILE =================
+              CircleAvatar(
                 radius: 48,
-                backgroundColor: Color(0xFF1B1F2A),
-                child: Icon(Icons.person, color: Colors.white, size: 50),
+                backgroundColor: colorScheme.surfaceContainer,
+                child: Icon(
+                  Icons.person,
+                  color: colorScheme.onSurface,
+                  size: 50,
+                ),
               ),
 
               const SizedBox(height: 15),
 
-              const Text(
-                "Rider",
+              Text(
+                'Rider',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -38,39 +46,44 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 5),
 
-              const Text(
-                "Beginner Rider",
-                style: TextStyle(color: Colors.white60, fontSize: 15),
+              Text(
+                'Beginner Rider',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 15,
+                ),
               ),
 
               const SizedBox(height: 25),
 
-              // Stats
+              // ================= STATS =================
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B1F2A),
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    profileStat("12", "Rides"),
-                    profileStat("8", "Lessons"),
-                    profileStat("85%", "Best Score"),
-                    profileStat("7 Days", "Streaks"),
+                    profileStat(context, '12', 'Rides'),
+                    profileStat(context, '8', 'Lessons'),
+                    profileStat(context, '85%', 'Best Score'),
+                    profileStat(context, '7 Days', 'Streaks'),
                   ],
                 ),
               ),
 
               const SizedBox(height: 25),
 
-              // Edit Profile
+              // ================= EDIT PROFILE =================
               profileOption(
+                context: context,
                 icon: Icons.edit_outlined,
-                title: "Edit Profile",
-                subtitle: "Update your rider information",
+                title: 'Edit Profile',
+                subtitle: 'Update your rider information',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -83,11 +96,12 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Achievements
+              // ================= ACHIEVEMENTS =================
               profileOption(
+                context: context,
                 icon: Icons.emoji_events_outlined,
-                title: "Achievements",
-                subtitle: "View your riding achievements",
+                title: 'Achievements',
+                subtitle: 'View your riding achievements',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -100,11 +114,12 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Settings
+              // ================= SETTINGS =================
               profileOption(
+                context: context,
                 icon: Icons.settings_outlined,
-                title: "Settings",
-                subtitle: "Manage your app preferences",
+                title: 'Settings',
+                subtitle: 'Manage your app preferences',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -112,7 +127,6 @@ class ProfileScreen extends StatelessWidget {
                       builder: (context) => SettingsScreen(
                         onThemeChanged: (mode) {
                           onThemeChanged(mode);
-                          // Handle theme change if needed
                         },
                       ),
                     ),
@@ -122,11 +136,12 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // About
+              // ================= ABOUT =================
               profileOption(
+                context: context,
                 icon: Icons.info_outline,
-                title: "About ASHWA",
-                subtitle: "Learn more about ASHWA",
+                title: 'About ASHWA',
+                subtitle: 'Learn more about ASHWA',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -143,7 +158,11 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget profileStat(String value, String label) {
+  // ================= PROFILE STAT =================
+
+  Widget profileStat(BuildContext context, String value, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
         Text(
@@ -154,38 +173,46 @@ class ProfileScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+
         const SizedBox(height: 5),
+
         Text(
           label,
-          style: const TextStyle(color: Colors.white60, fontSize: 13),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
       ],
     );
   }
 
+  // ================= PROFILE OPTION =================
+
   Widget profileOption({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     VoidCallback? onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(17),
         decoration: BoxDecoration(
-          color: const Color(0xFF1B1F2A),
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Row(
           children: [
+            // ================= ICON =================
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.15),
+                color: Colors.blue.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: Colors.blue, size: 24),
@@ -193,30 +220,37 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(width: 15),
 
+            // ================= TEXT =================
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Colors.white60, fontSize: 13),
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const Icon(
+            // ================= ARROW =================
+            Icon(
               Icons.arrow_forward_ios,
-              color: Colors.white54,
+              color: colorScheme.onSurfaceVariant,
               size: 16,
             ),
           ],

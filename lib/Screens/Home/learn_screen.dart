@@ -5,8 +5,10 @@ class LearnScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -14,10 +16,11 @@ class LearnScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Learn Riding",
+              // ================= HEADER =================
+              Text(
+                'Learn Riding',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colorScheme.onSurface,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -25,59 +28,67 @@ class LearnScreen extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              const Text(
-                "Master horse riding step by step",
-                style: TextStyle(color: Colors.white70, fontSize: 15),
+              Text(
+                'Master horse riding step by step',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 15,
+                ),
               ),
 
               const SizedBox(height: 25),
 
-              // Beginner
+              // ================= BEGINNER =================
               lessonCard(
+                context: context,
                 icon: Icons.pets,
-                title: "Beginner Basics",
-                subtitle: "Start your riding journey",
-                lessons: "3 Lessons",
+                title: 'Beginner Basics',
+                subtitle: 'Start your riding journey',
+                lessons: '3 Lessons',
               ),
 
               const SizedBox(height: 14),
 
-              // Fundamentals
+              // ================= FUNDAMENTALS =================
               lessonCard(
+                context: context,
                 icon: Icons.sports_handball,
-                title: "Riding Fundamentals",
-                subtitle: "Build your core riding skills",
-                lessons: "3 Lessons",
+                title: 'Riding Fundamentals',
+                subtitle: 'Build your core riding skills',
+                lessons: '3 Lessons',
               ),
 
               const SizedBox(height: 14),
 
-              // Intermediate
+              // ================= INTERMEDIATE =================
               lessonCard(
+                context: context,
                 icon: Icons.track_changes,
-                title: "Intermediate Riding",
-                subtitle: "Improve your riding technique",
-                lessons: "3 Lessons",
+                title: 'Intermediate Riding',
+                subtitle: 'Improve your riding technique',
+                lessons: '3 Lessons',
               ),
 
               const SizedBox(height: 14),
 
-              // Advanced
+              // ================= ADVANCED =================
               lessonCard(
+                context: context,
                 icon: Icons.emoji_events_outlined,
-                title: "Advanced Riding",
-                subtitle: "Take your skills to the next level",
-                lessons: "3 Lessons",
+                title: 'Advanced Riding',
+                subtitle: 'Take your skills to the next level',
+                lessons: '3 Lessons',
               ),
 
               const SizedBox(height: 14),
 
-              // Horse Care
+              // ================= HORSE CARE =================
               lessonCard(
+                context: context,
                 icon: Icons.pets_outlined,
-                title: "Horse Care",
-                subtitle: "Learn how to care for your horse",
-                lessons: "3 Lessons",
+                title: 'Horse Care',
+                subtitle: 'Learn how to care for your horse',
+                lessons: '3 Lessons',
               ),
 
               const SizedBox(height: 30),
@@ -88,27 +99,33 @@ class LearnScreen extends StatelessWidget {
     );
   }
 
+  // ================= LESSON CARD =================
+
   Widget lessonCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     required String lessons,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B1F2A),
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
+          // ================= ICON =================
           Container(
             width: 55,
             height: 55,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.15),
+              color: Colors.blue.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(icon, color: Colors.blue, size: 28),
@@ -116,14 +133,15 @@ class LearnScreen extends StatelessWidget {
 
           const SizedBox(width: 15),
 
+          // ================= CONTENT =================
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -133,7 +151,10 @@ class LearnScreen extends StatelessWidget {
 
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.white60, fontSize: 14),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                  ),
                 ),
 
                 const SizedBox(height: 8),
@@ -150,7 +171,12 @@ class LearnScreen extends StatelessWidget {
             ),
           ),
 
-          const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 18),
+          // ================= ARROW =================
+          Icon(
+            Icons.arrow_forward_ios,
+            color: colorScheme.onSurfaceVariant,
+            size: 18,
+          ),
         ],
       ),
     );
