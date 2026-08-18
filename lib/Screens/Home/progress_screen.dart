@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
 
-class ProgressScreen extends StatelessWidget {
+class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
+
+  @override
+  State<ProgressScreen> createState() => _ProgressScreenState();
+}
+
+class _ProgressScreenState extends State<ProgressScreen> {
+  // ================= SELECTED PERIOD =================
+
+  String selectedPeriod = 'Month';
+
+  // ================= PERIOD CHANGE =================
+
+  void changePeriod(String period) {
+    setState(() {
+      selectedPeriod = period;
+    });
+  }
+
+  // ================= BUILD =================
 
   @override
   Widget build(BuildContext context) {
@@ -9,28 +28,36 @@ class ProgressScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+
           child: Padding(
             padding: const EdgeInsets.all(20),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
                 // ================= HEADER =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                   children: [
                     Text(
                       'Progress',
+
                       style: TextStyle(
                         color: colorScheme.onSurface,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     IconButton(
                       onPressed: () {},
+
                       icon: Icon(
                         Icons.calendar_month_outlined,
                         color: colorScheme.onSurface,
@@ -46,17 +73,24 @@ class ProgressScreen extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   height: 48,
+
                   padding: const EdgeInsets.all(4),
+
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
+
                     borderRadius: BorderRadius.circular(24),
+
                     border: Border.all(color: colorScheme.outlineVariant),
                   ),
+
                   child: Row(
                     children: [
-                      _periodItem(context, 'Week', false),
-                      _periodItem(context, 'Month', true),
-                      _periodItem(context, 'Year', false),
+                      _periodItem(context, 'Week'),
+
+                      _periodItem(context, 'Month'),
+
+                      _periodItem(context, 'Year'),
                     ],
                   ),
                 ),
@@ -66,17 +100,24 @@ class ProgressScreen extends StatelessWidget {
                 // ================= OVERALL IMPROVEMENT =================
                 Container(
                   width: double.infinity,
+
                   padding: const EdgeInsets.all(18),
+
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
+
                     borderRadius: BorderRadius.circular(20),
+
                     border: Border.all(color: colorScheme.outlineVariant),
                   ),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: [
                       Text(
                         'Overall Improvement',
+
                         style: TextStyle(
                           color: colorScheme.onSurface,
                           fontSize: 17,
@@ -86,9 +127,14 @@ class ProgressScreen extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      const Text(
-                        '+15%',
-                        style: TextStyle(
+                      Text(
+                        selectedPeriod == 'Week'
+                            ? '+8%'
+                            : selectedPeriod == 'Year'
+                            ? '+32%'
+                            : '+15%',
+
+                        style: const TextStyle(
                           color: Colors.greenAccent,
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
@@ -96,7 +142,12 @@ class ProgressScreen extends StatelessWidget {
                       ),
 
                       Text(
-                        'vs Last Month',
+                        selectedPeriod == 'Week'
+                            ? 'vs Last Week'
+                            : selectedPeriod == 'Year'
+                            ? 'vs Last Year'
+                            : 'vs Last Month',
+
                         style: TextStyle(
                           color: colorScheme.onSurfaceVariant,
                           fontSize: 13,
@@ -109,10 +160,12 @@ class ProgressScreen extends StatelessWidget {
                       SizedBox(
                         height: 150,
                         width: double.infinity,
+
                         child: CustomPaint(
                           painter: ProgressChartPainter(
                             lineColor: Colors.lightBlue,
                             gridColor: colorScheme.outlineVariant,
+                            period: selectedPeriod,
                           ),
                         ),
                       ),
@@ -125,17 +178,24 @@ class ProgressScreen extends StatelessWidget {
                 // ================= SCORE TREND =================
                 Container(
                   width: double.infinity,
+
                   padding: const EdgeInsets.all(18),
+
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
+
                     borderRadius: BorderRadius.circular(20),
+
                     border: Border.all(color: colorScheme.outlineVariant),
                   ),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: [
                       Text(
                         'Score Trend',
+
                         style: TextStyle(
                           color: colorScheme.onSurface,
                           fontSize: 17,
@@ -163,19 +223,24 @@ class ProgressScreen extends StatelessWidget {
                 // ================= RECENT RIDES =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                   children: [
                     Text(
                       'Recent Rides',
+
                       style: TextStyle(
                         color: colorScheme.onSurface,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     TextButton(
                       onPressed: () {},
+
                       child: const Text(
                         'View All',
+
                         style: TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.bold,
@@ -190,21 +255,29 @@ class ProgressScreen extends StatelessWidget {
                 // ================= RECENT RIDE CARD =================
                 Container(
                   width: double.infinity,
+
                   padding: const EdgeInsets.all(16),
+
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
+
                     borderRadius: BorderRadius.circular(18),
+
                     border: Border.all(color: colorScheme.outlineVariant),
                   ),
+
                   child: Row(
                     children: [
                       Container(
                         width: 48,
                         height: 48,
+
                         decoration: BoxDecoration(
                           color: Colors.blue.withValues(alpha: 0.15),
+
                           borderRadius: BorderRadius.circular(14),
                         ),
+
                         child: const Icon(
                           Icons.directions_run,
                           color: Colors.blue,
@@ -216,9 +289,11 @@ class ProgressScreen extends StatelessWidget {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+
                           children: [
                             Text(
                               'Ride Session',
+
                               style: TextStyle(
                                 color: colorScheme.onSurface,
                                 fontSize: 16,
@@ -230,6 +305,7 @@ class ProgressScreen extends StatelessWidget {
 
                             Text(
                               'Today • 35 min',
+
                               style: TextStyle(
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 13,
@@ -241,6 +317,7 @@ class ProgressScreen extends StatelessWidget {
 
                       const Text(
                         '85%',
+
                         style: TextStyle(
                           color: Colors.greenAccent,
                           fontSize: 17,
@@ -269,23 +346,38 @@ class ProgressScreen extends StatelessWidget {
 
   // ================= PERIOD ITEM =================
 
-  Widget _periodItem(BuildContext context, String text, bool selected) {
+  Widget _periodItem(BuildContext context, String text) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final bool selected = selectedPeriod == text;
+
     return Expanded(
-      child: Container(
-        height: double.infinity,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? Colors.blue : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: selected ? Colors.white : colorScheme.onSurfaceVariant,
-            fontSize: 14,
-            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+      child: GestureDetector(
+        onTap: () {
+          changePeriod(text);
+        },
+
+        child: Container(
+          height: double.infinity,
+
+          alignment: Alignment.center,
+
+          decoration: BoxDecoration(
+            color: selected ? Colors.blue : Colors.transparent,
+
+            borderRadius: BorderRadius.circular(20),
+          ),
+
+          child: Text(
+            text,
+
+            style: TextStyle(
+              color: selected ? Colors.white : colorScheme.onSurfaceVariant,
+
+              fontSize: 14,
+
+              fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -307,6 +399,7 @@ class ProgressScreen extends StatelessWidget {
         Expanded(
           child: Text(
             title,
+
             style: TextStyle(
               color: colorScheme.onSurfaceVariant,
               fontSize: 15,
@@ -317,9 +410,12 @@ class ProgressScreen extends StatelessWidget {
 
         SizedBox(
           width: 65,
+
           child: Text(
             score,
+
             textAlign: TextAlign.center,
+
             style: TextStyle(
               color: colorScheme.onSurface,
               fontSize: 16,
@@ -330,9 +426,12 @@ class ProgressScreen extends StatelessWidget {
 
         SizedBox(
           width: 65,
+
           child: Text(
             improvement,
+
             textAlign: TextAlign.right,
+
             style: const TextStyle(
               color: Colors.greenAccent,
               fontSize: 15,
@@ -352,8 +451,13 @@ class ProgressScreen extends StatelessWidget {
 class ProgressChartPainter extends CustomPainter {
   final Color lineColor;
   final Color gridColor;
+  final String period;
 
-  ProgressChartPainter({required this.lineColor, required this.gridColor});
+  ProgressChartPainter({
+    required this.lineColor,
+    required this.gridColor,
+    required this.period,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -370,7 +474,7 @@ class ProgressChartPainter extends CustomPainter {
       ..color = gridColor
       ..strokeWidth = 1;
 
-    // Grid lines
+    // ================= GRID =================
 
     for (int i = 1; i <= 3; i++) {
       final y = size.height * i / 4;
@@ -378,19 +482,47 @@ class ProgressChartPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // Graph points
+    // ================= GRAPH DATA =================
 
-    final points = [
-      Offset(size.width * 0.08, size.height * 0.78),
-      Offset(size.width * 0.27, size.height * 0.57),
-      Offset(size.width * 0.46, size.height * 0.38),
-      Offset(size.width * 0.60, size.height * 0.52),
-      Offset(size.width * 0.73, size.height * 0.22),
-      Offset(size.width * 0.85, size.height * 0.38),
-      Offset(size.width * 0.98, size.height * 0.05),
-    ];
+    List<Offset> points;
 
-    // Graph path
+    if (period == 'Week') {
+      points = [
+        Offset(size.width * 0.08, size.height * 0.70),
+        Offset(size.width * 0.23, size.height * 0.55),
+        Offset(size.width * 0.38, size.height * 0.62),
+        Offset(size.width * 0.53, size.height * 0.42),
+        Offset(size.width * 0.68, size.height * 0.35),
+        Offset(size.width * 0.83, size.height * 0.25),
+        Offset(size.width * 0.98, size.height * 0.15),
+      ];
+    } else if (period == 'Year') {
+      points = [
+        Offset(size.width * 0.08, size.height * 0.82),
+        Offset(size.width * 0.17, size.height * 0.72),
+        Offset(size.width * 0.26, size.height * 0.65),
+        Offset(size.width * 0.35, size.height * 0.55),
+        Offset(size.width * 0.44, size.height * 0.60),
+        Offset(size.width * 0.53, size.height * 0.45),
+        Offset(size.width * 0.62, size.height * 0.38),
+        Offset(size.width * 0.71, size.height * 0.30),
+        Offset(size.width * 0.80, size.height * 0.24),
+        Offset(size.width * 0.89, size.height * 0.18),
+        Offset(size.width * 0.98, size.height * 0.08),
+      ];
+    } else {
+      points = [
+        Offset(size.width * 0.08, size.height * 0.78),
+        Offset(size.width * 0.27, size.height * 0.57),
+        Offset(size.width * 0.46, size.height * 0.38),
+        Offset(size.width * 0.60, size.height * 0.52),
+        Offset(size.width * 0.73, size.height * 0.22),
+        Offset(size.width * 0.85, size.height * 0.38),
+        Offset(size.width * 0.98, size.height * 0.05),
+      ];
+    }
+
+    // ================= GRAPH PATH =================
 
     final path = Path();
 
@@ -402,7 +534,7 @@ class ProgressChartPainter extends CustomPainter {
 
     canvas.drawPath(path, linePaint);
 
-    // Points
+    // ================= GRAPH POINTS =================
 
     for (final point in points) {
       canvas.drawCircle(point, 5, pointPaint);
@@ -412,6 +544,7 @@ class ProgressChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant ProgressChartPainter oldDelegate) {
     return oldDelegate.lineColor != lineColor ||
-        oldDelegate.gridColor != gridColor;
+        oldDelegate.gridColor != gridColor ||
+        oldDelegate.period != period;
   }
 }
