@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../Profile/settings_screen.dart';
@@ -23,6 +25,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String horseName = '';
   String ridingLevel = 'Beginner';
 
+  // ================= PROFILE IMAGE =================
+
+  String? profileImagePath;
+
   // ================= BUILD =================
 
   @override
@@ -46,11 +52,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 backgroundColor: colorScheme.surfaceContainer,
 
-                child: Icon(
-                  Icons.person,
-                  color: colorScheme.onSurface,
-                  size: 50,
-                ),
+                backgroundImage: profileImagePath != null
+                    ? FileImage(File(profileImagePath!))
+                    : null,
+
+                child: profileImagePath == null
+                    ? Icon(Icons.person, color: colorScheme.onSurface, size: 50)
+                    : null,
               ),
 
               const SizedBox(height: 15),
@@ -135,10 +143,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (result != null && result is Map) {
                     setState(() {
                       name = result['name'] ?? name;
+
                       email = result['email'] ?? email;
+
                       age = result['age'] ?? age;
+
                       horseName = result['horseName'] ?? horseName;
+
                       ridingLevel = result['ridingLevel'] ?? ridingLevel;
+
+                      profileImagePath =
+                          result['profileImagePath'] ?? profileImagePath;
                     });
                   }
                 },

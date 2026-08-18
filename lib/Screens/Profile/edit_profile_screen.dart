@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String name;
@@ -21,24 +24,53 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  // ================= TEXT CONTROLLERS =================
+
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController ageController;
   late final TextEditingController horseController;
 
+  // ================= RIDING LEVEL =================
+
   late String ridingLevel;
+
+  // ================= PROFILE IMAGE =================
+
+  XFile? selectedImage;
+
+  // ================= INIT STATE =================
 
   @override
   void initState() {
     super.initState();
 
     nameController = TextEditingController(text: widget.name);
+
     emailController = TextEditingController(text: widget.email);
+
     ageController = TextEditingController(text: widget.age);
+
     horseController = TextEditingController(text: widget.horseName);
 
     ridingLevel = widget.ridingLevel;
   }
+
+  // ================= PICK PROFILE IMAGE =================
+
+  Future<void> pickProfileImage() async {
+    final ImagePicker picker = ImagePicker();
+
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        selectedImage = image;
+      });
+    }
+  }
+
+  // ================= DISPOSE =================
 
   @override
   void dispose() {
@@ -59,6 +91,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'age': ageController.text.trim(),
       'horseName': horseController.text.trim(),
       'ridingLevel': ridingLevel,
+      'profileImagePath': selectedImage?.path,
     };
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -70,6 +103,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     Navigator.pop(context, updatedProfile);
   }
+
+  // ================= BUILD =================
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +151,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
               // ================= PROFILE PICTURE =================
               Center(
@@ -130,35 +166,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         shape: BoxShape.circle,
                       ),
 
-                      child: Icon(
-                        Icons.person,
-                        color: colorScheme.onSurface,
-                        size: 58,
-                      ),
+                      child: selectedImage != null
+                          ? ClipOval(
+                              child: Image.file(
+                                File(selectedImage!.path),
+                                width: 105,
+                                height: 105,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Icon(
+                              Icons.person,
+                              color: colorScheme.onSurface,
+                              size: 58,
+                            ),
                     ),
 
                     Positioned(
                       right: 0,
                       bottom: 2,
 
-                      child: Container(
-                        width: 34,
-                        height: 34,
+                      child: GestureDetector(
+                        onTap: pickProfileImage,
 
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
+                        child: Container(
+                          width: 34,
+                          height: 34,
 
-                          border: Border.all(
-                            color: colorScheme.surface,
-                            width: 3,
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+
+                            border: Border.all(
+                              color: colorScheme.surface,
+                              width: 3,
+                            ),
                           ),
-                        ),
 
-                        child: const Icon(
-                          Icons.camera_alt_outlined,
-                          color: Colors.white,
-                          size: 17,
+                          child: const Icon(
+                            Icons.camera_alt_outlined,
+                            color: Colors.white,
+                            size: 17,
+                          ),
                         ),
                       ),
                     ),
@@ -169,13 +218,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 12),
 
               Center(
-                child: Text(
-                  'Change Profile Photo',
+                child: GestureDetector(
+                  onTap: pickProfileImage,
 
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  child: const Text(
+                    'Change Profile Photo',
+
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
@@ -195,7 +248,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // Name
+              // ================= NAME =================
               profileField(
                 controller: nameController,
                 label: 'Name',
@@ -204,7 +257,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // Email
+              // ================= EMAIL =================
               profileField(
                 controller: emailController,
                 label: 'Email',
@@ -214,7 +267,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // Age
+              // ================= AGE =================
               profileField(
                 controller: ageController,
                 label: 'Age',
@@ -314,7 +367,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // Horse Name
+              // ================= HORSE NAME =================
               profileField(
                 controller: horseController,
                 label: 'Horse Name',
@@ -333,7 +386,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
+
                     foregroundColor: Colors.white,
+
                     elevation: 0,
 
                     shape: RoundedRectangleBorder(
