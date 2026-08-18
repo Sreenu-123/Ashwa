@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Profile/settings_screen.dart';
 import '../Profile/edit_profile_screen.dart';
@@ -29,6 +30,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String? profileImagePath;
 
+  // ================= INIT =================
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadProfile();
+  }
+
+  // ================= LOAD PROFILE =================
+
+  Future<void> loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      name = prefs.getString('profile_name') ?? 'Rider';
+
+      email = prefs.getString('profile_email') ?? 'rider@example.com';
+
+      age = prefs.getString('profile_age') ?? '20';
+
+      horseName = prefs.getString('profile_horse_name') ?? '';
+
+      ridingLevel = prefs.getString('profile_riding_level') ?? 'Beginner';
+
+      profileImagePath = prefs.getString('profile_image_path');
+    });
+  }
+
+  // ================= SAVE PROFILE =================
+
+  Future<void> saveProfile(Map result) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final newName = result['name'] ?? name;
+    final newEmail = result['email'] ?? email;
+    final newAge = result['age'] ?? age;
+    final newHorseName = result['horseName'] ?? horseName;
+    final newRidingLevel = result['ridingLevel'] ?? ridingLevel;
+
+    final newProfileImagePath = result['profileImagePath'] ?? profileImagePath;
+
+    await prefs.setString('profile_name', newName);
+
+    await prefs.setString('profile_email', newEmail);
+
+    await prefs.setString('profile_age', newAge);
+
+    await prefs.setString('profile_horse_name', newHorseName);
+
+    await prefs.setString('profile_riding_level', newRidingLevel);
+
+    if (newProfileImagePath != null) {
+      await prefs.setString('profile_image_path', newProfileImagePath);
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      name = newName;
+      email = newEmail;
+      age = newAge;
+      horseName = newHorseName;
+      ridingLevel = newRidingLevel;
+      profileImagePath = newProfileImagePath;
+    });
+  }
+
   // ================= BUILD =================
 
   @override
@@ -52,11 +123,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 backgroundColor: colorScheme.surfaceContainer,
 
-                backgroundImage: profileImagePath != null
+                backgroundImage:
+                    profileImagePath != null &&
+                        File(profileImagePath!).existsSync()
                     ? FileImage(File(profileImagePath!))
                     : null,
 
-                child: profileImagePath == null
+                child:
+                    profileImagePath == null ||
+                        !File(profileImagePath!).existsSync()
                     ? Icon(Icons.person, color: colorScheme.onSurface, size: 50)
                     : null,
               ),
@@ -141,20 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
 
                   if (result != null && result is Map) {
-                    setState(() {
-                      name = result['name'] ?? name;
-
-                      email = result['email'] ?? email;
-
-                      age = result['age'] ?? age;
-
-                      horseName = result['horseName'] ?? horseName;
-
-                      ridingLevel = result['ridingLevel'] ?? ridingLevel;
-
-                      profileImagePath =
-                          result['profileImagePath'] ?? profileImagePath;
-                    });
+                    await saveProfile(result);
                   }
                 },
               ),
