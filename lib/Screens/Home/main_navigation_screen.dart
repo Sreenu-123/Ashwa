@@ -72,6 +72,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
         onLearnTap: () {
           changeTab(3);
         },
+        onProgressTap: () {
+          changeTab(2);
+        },
       ),
 
       const RideScreen(),
