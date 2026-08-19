@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
@@ -10,6 +11,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  // ================= SETTINGS DATA =================
+
   bool voiceCoaching = true;
   bool notifications = true;
 
@@ -19,18 +22,133 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String voiceLanguage = 'English';
   String coachingLevel = 'Intermediate';
 
+  // ================= INIT =================
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadSettings();
+  }
+
+  // ================= LOAD SETTINGS =================
+
+  Future<void> loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedAppearance = prefs.getString('settings_appearance') ?? 'Dark';
+
+    if (!mounted) return;
+
+    setState(() {
+      voiceCoaching = prefs.getBool('settings_voice_coaching') ?? true;
+
+      notifications = prefs.getBool('settings_notifications') ?? true;
+
+      units = prefs.getString('settings_units') ?? 'Metric';
+
+      language = prefs.getString('settings_language') ?? 'English';
+
+      appearance = savedAppearance;
+
+      voiceLanguage = prefs.getString('settings_voice_language') ?? 'English';
+
+      coachingLevel =
+          prefs.getString('settings_coaching_level') ?? 'Intermediate';
+    });
+
+    // Apply saved appearance
+    if (savedAppearance == 'Dark') {
+      widget.onThemeChanged(ThemeMode.dark);
+    } else if (savedAppearance == 'Light') {
+      widget.onThemeChanged(ThemeMode.light);
+    } else {
+      widget.onThemeChanged(ThemeMode.system);
+    }
+  }
+
+  // ================= SAVE VOICE COACHING =================
+
+  Future<void> saveVoiceCoaching(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('settings_voice_coaching', value);
+  }
+
+  // ================= SAVE NOTIFICATIONS =================
+
+  Future<void> saveNotifications(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('settings_notifications', value);
+  }
+
+  // ================= SAVE UNITS =================
+
+  Future<void> saveUnits(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('settings_units', value);
+  }
+
+  // ================= SAVE LANGUAGE =================
+
+  Future<void> saveLanguage(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('settings_language', value);
+  }
+
+  // ================= SAVE APPEARANCE =================
+
+  Future<void> saveAppearance(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('settings_appearance', value);
+
+    if (value == 'Dark') {
+      widget.onThemeChanged(ThemeMode.dark);
+    } else if (value == 'Light') {
+      widget.onThemeChanged(ThemeMode.light);
+    } else {
+      widget.onThemeChanged(ThemeMode.system);
+    }
+  }
+
+  // ================= SAVE VOICE LANGUAGE =================
+
+  Future<void> saveVoiceLanguage(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('settings_voice_language', value);
+  }
+
+  // ================= SAVE COACHING LEVEL =================
+
+  Future<void> saveCoachingLevel(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('settings_coaching_level', value);
+  }
+
+  // ================= BUILD =================
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+
           padding: const EdgeInsets.all(20),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
               // ================= HEADER =================
               Row(
@@ -39,6 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
+
                     icon: Icon(
                       Icons.arrow_back_ios_new,
                       color: colorScheme.onSurface,
@@ -50,6 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   Text(
                     'Settings',
+
                     style: TextStyle(
                       color: colorScheme.onSurface,
                       fontSize: 28,
@@ -68,11 +188,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   settingsTile(
                     icon: Icons.person_outline,
+
                     title: 'Profile Information',
+
                     trailing: Icon(
                       Icons.chevron_right,
                       color: colorScheme.onSurfaceVariant,
                     ),
+
                     onTap: () {},
                   ),
 
@@ -80,17 +203,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.straighten,
+
                     title: 'Units',
+
                     trailingText: units,
+
                     onTap: () {
                       showSelectionDialog(
                         title: 'Units',
+
                         options: ['Metric', 'Imperial'],
+
                         selectedValue: units,
+
                         onSelected: (value) {
                           setState(() {
                             units = value;
                           });
+
+                          saveUnits(value);
                         },
                       );
                     },
@@ -100,17 +231,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.language,
+
                     title: 'Language',
+
                     trailingText: language,
+
                     onTap: () {
                       showSelectionDialog(
                         title: 'Language',
+
                         options: ['English', 'Malayalam'],
+
                         selectedValue: language,
+
                         onSelected: (value) {
                           setState(() {
                             language = value;
                           });
+
+                          saveLanguage(value);
                         },
                       );
                     },
@@ -120,25 +259,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.brightness_6_outlined,
+
                     title: 'Appearance',
+
                     trailingText: appearance,
+
                     onTap: () {
                       showSelectionDialog(
                         title: 'Appearance',
+
                         options: ['Dark', 'Light', 'System'],
+
                         selectedValue: appearance,
+
                         onSelected: (value) {
                           setState(() {
                             appearance = value;
                           });
 
-                          if (value == 'Dark') {
-                            widget.onThemeChanged(ThemeMode.dark);
-                          } else if (value == 'Light') {
-                            widget.onThemeChanged(ThemeMode.light);
-                          } else {
-                            widget.onThemeChanged(ThemeMode.system);
-                          }
+                          saveAppearance(value);
                         },
                       );
                     },
@@ -155,13 +294,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   settingsTile(
                     icon: Icons.mic_none,
+
                     title: 'Voice Coaching',
+
                     trailing: Switch(
                       value: voiceCoaching,
+
                       onChanged: (value) {
                         setState(() {
                           voiceCoaching = value;
                         });
+
+                        saveVoiceCoaching(value);
                       },
                     ),
                   ),
@@ -170,17 +314,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.record_voice_over_outlined,
+
                     title: 'Voice Language',
+
                     trailingText: voiceLanguage,
+
                     onTap: () {
                       showSelectionDialog(
                         title: 'Voice Language',
+
                         options: ['English', 'Malayalam'],
+
                         selectedValue: voiceLanguage,
+
                         onSelected: (value) {
                           setState(() {
                             voiceLanguage = value;
                           });
+
+                          saveVoiceLanguage(value);
                         },
                       );
                     },
@@ -190,17 +342,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.psychology_outlined,
+
                     title: 'Coaching Level',
+
                     trailingText: coachingLevel,
+
                     onTap: () {
                       showSelectionDialog(
                         title: 'Coaching Level',
+
                         options: ['Beginner', 'Intermediate', 'Advanced'],
+
                         selectedValue: coachingLevel,
+
                         onSelected: (value) {
                           setState(() {
                             coachingLevel = value;
                           });
+
+                          saveCoachingLevel(value);
                         },
                       );
                     },
@@ -217,13 +377,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   settingsTile(
                     icon: Icons.notifications_none,
+
                     title: 'Notifications',
+
                     trailing: Switch(
                       value: notifications,
+
                       onChanged: (value) {
                         setState(() {
                           notifications = value;
                         });
+
+                        saveNotifications(value);
                       },
                     ),
                   ),
@@ -232,11 +397,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.privacy_tip_outlined,
+
                     title: 'Privacy Policy',
+
                     trailing: Icon(
                       Icons.chevron_right,
                       color: colorScheme.onSurfaceVariant,
                     ),
+
                     onTap: () {},
                   ),
 
@@ -244,11 +412,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.description_outlined,
+
                     title: 'Terms & Conditions',
+
                     trailing: Icon(
                       Icons.chevron_right,
                       color: colorScheme.onSurfaceVariant,
                     ),
+
                     onTap: () {},
                   ),
 
@@ -256,11 +427,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.help_outline,
+
                     title: 'Help & Support',
+
                     trailing: Icon(
                       Icons.chevron_right,
                       color: colorScheme.onSurfaceVariant,
                     ),
+
                     onTap: () {},
                   ),
                 ],
@@ -275,11 +449,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   settingsTile(
                     icon: Icons.info_outline,
+
                     title: 'About ASHWA',
+
                     trailing: Icon(
                       Icons.chevron_right,
                       color: colorScheme.onSurfaceVariant,
                     ),
+
                     onTap: () {},
                   ),
 
@@ -287,7 +464,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   settingsTile(
                     icon: Icons.system_update_outlined,
+
                     title: 'App Version',
+
                     trailingText: '1.0.0',
                   ),
                 ],
@@ -302,23 +481,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () {
                   showLogoutDialog();
                 },
+
                 child: Container(
                   width: double.infinity,
+
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 17,
                   ),
+
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainer,
+
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.red.withOpacity(0.25)),
+
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.25),
+                    ),
                   ),
+
                   child: const Row(
                     children: [
                       Icon(Icons.logout, color: Colors.redAccent),
+
                       SizedBox(width: 15),
+
                       Text(
                         'Logout',
+
                         style: TextStyle(
                           color: Colors.redAccent,
                           fontSize: 16,
@@ -336,8 +526,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Center(
                 child: Text(
                   'ASHWA AI',
+
                   style: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.35),
+                    color: colorScheme.onSurface.withValues(alpha: 0.35),
+
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -359,8 +551,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 10),
+
       child: Text(
         title,
+
         style: TextStyle(
           color: colorScheme.onSurface,
           fontSize: 18,
@@ -377,11 +571,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Container(
       width: double.infinity,
+
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
+
         borderRadius: BorderRadius.circular(18),
+
         border: Border.all(color: colorScheme.outlineVariant),
       ),
+
       child: Column(children: children),
     );
   }
@@ -399,17 +597,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return GestureDetector(
       onTap: onTap,
+
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+
         child: Row(
           children: [
             Container(
               width: 40,
               height: 40,
+
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.12),
+                color: Colors.blue.withValues(alpha: 0.12),
+
                 borderRadius: BorderRadius.circular(12),
               ),
+
               child: Icon(icon, color: Colors.blue, size: 21),
             ),
 
@@ -418,9 +621,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Expanded(
               child: Text(
                 title,
+
                 style: TextStyle(
                   color: colorScheme.onSurface,
+
                   fontSize: 15,
+
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -429,8 +635,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (trailingText != null)
               Text(
                 trailingText,
+
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
+
                   fontSize: 14,
                 ),
               ),
@@ -449,7 +657,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Divider(
       height: 1,
+
       color: colorScheme.outlineVariant,
+
       indent: 16,
       endIndent: 16,
     );
@@ -467,6 +677,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     showDialog(
       context: context,
+
       builder: (context) {
         return AlertDialog(
           backgroundColor: colorScheme.surface,
@@ -475,20 +686,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           content: Column(
             mainAxisSize: MainAxisSize.min,
+
             children: options.map((option) {
               return RadioListTile<String>(
                 value: option,
+
                 groupValue: selectedValue,
+
                 activeColor: Colors.blue,
 
                 title: Text(
                   option,
+
                   style: TextStyle(color: colorScheme.onSurface),
                 ),
 
                 onChanged: (value) {
                   if (value != null) {
                     onSelected(value);
+
                     Navigator.pop(context);
                   }
                 },
@@ -507,6 +723,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     showDialog(
       context: context,
+
       builder: (context) {
         return AlertDialog(
           backgroundColor: colorScheme.surface,
@@ -515,6 +732,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           content: Text(
             'Are you sure you want to logout?',
+
             style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
 
@@ -523,6 +741,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
+
               child: const Text('Cancel'),
             ),
 
@@ -530,8 +749,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
+
               child: const Text(
                 'Logout',
+
                 style: TextStyle(color: Colors.redAccent),
               ),
             ),
