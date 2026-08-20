@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Profile/settings_screen.dart';
@@ -18,89 +19,178 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // ================= PROFILE DATA =================
-
   String name = 'Rider';
   String email = 'rider@example.com';
   String age = '20';
   String horseName = '';
   String ridingLevel = 'Beginner';
 
-  // ================= PROFILE IMAGE =================
-
   String? profileImagePath;
-
-  // ================= INIT =================
 
   @override
   void initState() {
     super.initState();
-
-    loadProfile();
+    loadProfileData();
   }
 
-  // ================= LOAD PROFILE =================
+  // ============================================================
+  // LOAD PROFILE DATA
+  // ============================================================
 
-  Future<void> loadProfile() async {
+  Future<void> loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
 
-    if (!mounted) return;
+    final savedName = prefs.getString('profile_name');
+    final savedEmail = prefs.getString('profile_email');
+    final savedAge = prefs.getString('profile_age');
+    final savedHorseName = prefs.getString('profile_horse_name');
+    final savedRidingLevel = prefs.getString('profile_riding_level');
 
-    setState(() {
-      name = prefs.getString('profile_name') ?? 'Rider';
+    // We store ONLY the filename in SharedPreferences.
+    final savedImageName = prefs.getString('profile_image_name');
 
-      email = prefs.getString('profile_email') ?? 'rider@example.com';
+    String? imagePath;
 
-      age = prefs.getString('profile_age') ?? '20';
+    if (savedImageName != null && savedImageName.isNotEmpty) {
+      final directory = await getApplicationSupportDirectory();
 
-      horseName = prefs.getString('profile_horse_name') ?? '';
+      final file = File('${directory.path}/$savedImageName');
 
-      ridingLevel = prefs.getString('profile_riding_level') ?? 'Beginner';
-
-      profileImagePath = prefs.getString('profile_image_path');
-    });
-  }
-
-  // ================= SAVE PROFILE =================
-
-  Future<void> saveProfile(Map result) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final newName = result['name'] ?? name;
-    final newEmail = result['email'] ?? email;
-    final newAge = result['age'] ?? age;
-    final newHorseName = result['horseName'] ?? horseName;
-    final newRidingLevel = result['ridingLevel'] ?? ridingLevel;
-
-    final newProfileImagePath = result['profileImagePath'] ?? profileImagePath;
-
-    await prefs.setString('profile_name', newName);
-
-    await prefs.setString('profile_email', newEmail);
-
-    await prefs.setString('profile_age', newAge);
-
-    await prefs.setString('profile_horse_name', newHorseName);
-
-    await prefs.setString('profile_riding_level', newRidingLevel);
-
-    if (newProfileImagePath != null) {
-      await prefs.setString('profile_image_path', newProfileImagePath);
+      if (await file.exists()) {
+        imagePath = file.path;
+      }
     }
 
     if (!mounted) return;
 
     setState(() {
-      name = newName;
-      email = newEmail;
-      age = newAge;
-      horseName = newHorseName;
-      ridingLevel = newRidingLevel;
-      profileImagePath = newProfileImagePath;
+      name = savedName ?? 'Rider';
+      email = savedEmail ?? 'rider@example.com';
+      age = savedAge ?? '20';
+      horseName = savedHorseName ?? '';
+      ridingLevel = savedRidingLevel ?? 'Beginner';
+
+      profileImagePath = imagePath;
     });
+
+    debugPrint('Loaded profile image: $imagePath');
   }
 
-  // ================= BUILD =================
+  // ============================================================
+  // SAVE PROFILE DATA
+  // ============================================================
+
+  Future<void> saveProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('profile_name', name);
+    await prefs.setString('profile_email', email);
+    await prefs.setString('profile_age', age);
+    await prefs.setString('profile_horse_name', horseName);
+    await prefs.setString('profile_riding_level', ridingLevel);
+  }
+
+  // ============================================================
+  // SAVE PROFILE IMAGE PERMANENTLY
+  // ============================================================
+
+  Future<String?> saveProfileImage(String imagePath) async {
+    try {
+      final sourceFile = File(imagePath);
+
+      if (!await sourceFile.exists()) {
+        debugPrint('Source image does not exist.');
+        return null;
+      }
+
+      final directory = await getApplicationSupportDirectory();
+
+      const fileName = 'ashwa_profile_image.jpg';
+
+      final permanentFile = File('${directory.path}/$fileName');
+
+      // Read original image bytes.
+      final imageBytes = await sourceFile.readAsBytes();
+
+      // Write image bytes into permanent app storage.
+      await permanentFile.writeAsBytes(imageBytes, flush: true);
+
+      // Save ONLY filename.
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString('profile_image_name', fileName);
+
+      debugPrint('Profile image permanently saved: ${permanentFile.path}');
+
+      return permanentFile.path;
+    } catch (e) {
+      debugPrint('PROFILE IMAGE SAVE ERROR: $e');
+
+      return null;
+    }
+  }
+
+  // ============================================================
+  // OPEN EDIT PROFILE
+  // ============================================================
+
+  Future<void> openEditProfile() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(
+          name: name,
+          email: email,
+          age: age,
+          horseName: horseName,
+          ridingLevel: ridingLevel,
+          currentProfileImagePath: profileImagePath,
+        ),
+      ),
+    );
+
+    if (result == null || result is! Map) {
+      return;
+    }
+
+    // ----------------------------------------------------------
+    // PROFILE DATA
+    // ----------------------------------------------------------
+
+    setState(() {
+      name = result['name'] ?? name;
+      email = result['email'] ?? email;
+      age = result['age'] ?? age;
+      horseName = result['horseName'] ?? horseName;
+      ridingLevel = result['ridingLevel'] ?? ridingLevel;
+    });
+
+    // ----------------------------------------------------------
+    // PROFILE IMAGE
+    // ----------------------------------------------------------
+
+    final returnedImagePath = result['profileImagePath'];
+
+    if (returnedImagePath != null && returnedImagePath.toString().isNotEmpty) {
+      final savedPath = await saveProfileImage(returnedImagePath.toString());
+
+      if (savedPath != null && mounted) {
+        setState(() {
+          profileImagePath = savedPath;
+        });
+      }
+    }
+
+    // ----------------------------------------------------------
+    // SAVE OTHER DATA
+    // ----------------------------------------------------------
+
+    await saveProfileData();
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -112,12 +202,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-
           padding: const EdgeInsets.all(20),
 
           child: Column(
             children: [
-              // ================= PROFILE =================
+              // ==================================================
+              // PROFILE IMAGE
+              // ==================================================
               CircleAvatar(
                 radius: 48,
 
@@ -138,9 +229,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // ==================================================
+              // NAME
+              // ==================================================
               Text(
                 name,
-
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 24,
@@ -152,7 +245,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               Text(
                 '$ridingLevel Rider',
-
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 15,
@@ -161,15 +253,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 25),
 
-              // ================= STATS =================
+              // ==================================================
+              // STATS
+              // ==================================================
               Container(
                 width: double.infinity,
-
                 padding: const EdgeInsets.symmetric(vertical: 20),
 
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainer,
-
                   borderRadius: BorderRadius.circular(20),
                 ),
 
@@ -178,11 +270,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   children: [
                     profileStat(context, '12', 'Rides'),
-
                     profileStat(context, '8', 'Lessons'),
-
                     profileStat(context, '85%', 'Best Score'),
-
                     profileStat(context, '7 Days', 'Streaks'),
                   ],
                 ),
@@ -190,53 +279,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 25),
 
-              // ================= EDIT PROFILE =================
+              // ==================================================
+              // EDIT PROFILE
+              // ==================================================
               profileOption(
                 context: context,
-
                 icon: Icons.edit_outlined,
-
                 title: 'Edit Profile',
-
                 subtitle: 'Update your rider information',
-
-                onTap: () async {
-                  final result = await Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (context) => EditProfileScreen(
-                        name: name,
-                        email: email,
-                        age: age,
-                        horseName: horseName,
-                        ridingLevel: ridingLevel,
-                      ),
-                    ),
-                  );
-
-                  if (result != null && result is Map) {
-                    await saveProfile(result);
-                  }
-                },
+                onTap: openEditProfile,
               ),
 
               const SizedBox(height: 12),
 
-              // ================= ACHIEVEMENTS =================
+              // ==================================================
+              // ACHIEVEMENTS
+              // ==================================================
               profileOption(
                 context: context,
-
                 icon: Icons.emoji_events_outlined,
-
                 title: 'Achievements',
-
                 subtitle: 'View your riding achievements',
-
                 onTap: () {
                   Navigator.push(
                     context,
-
                     MaterialPageRoute(
                       builder: (context) => const AchievementsScreen(),
                     ),
@@ -246,20 +312,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // ================= SETTINGS =================
+              // ==================================================
+              // SETTINGS
+              // ==================================================
               profileOption(
                 context: context,
-
                 icon: Icons.settings_outlined,
-
                 title: 'Settings',
-
                 subtitle: 'Manage your app preferences',
-
                 onTap: () {
                   Navigator.push(
                     context,
-
                     MaterialPageRoute(
                       builder: (context) => SettingsScreen(
                         onThemeChanged: (mode) {
@@ -273,20 +336,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // ================= ABOUT =================
+              // ==================================================
+              // ABOUT
+              // ==================================================
               profileOption(
                 context: context,
-
                 icon: Icons.info_outline,
-
                 title: 'About ASHWA',
-
                 subtitle: 'Learn more about ASHWA',
-
                 onTap: () {
                   Navigator.push(
                     context,
-
                     MaterialPageRoute(
                       builder: (context) => const AboutAshwaScreen(),
                     ),
@@ -300,16 +360,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ================= PROFILE STAT =================
+  // ============================================================
+  // PROFILE STAT
+  // ============================================================
 
   Widget profileStat(BuildContext context, String value, String label) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       children: [
+        const SizedBox(height: 0),
+
         Text(
           value,
-
           style: const TextStyle(
             color: Colors.blue,
             fontSize: 20,
@@ -321,14 +384,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         Text(
           label,
-
           style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
       ],
     );
   }
 
-  // ================= PROFILE OPTION =================
+  // ============================================================
+  // PROFILE OPTION
+  // ============================================================
 
   Widget profileOption({
     required BuildContext context,
@@ -357,14 +421,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         child: Row(
           children: [
-            // ================= ICON =================
             Container(
               width: 48,
               height: 48,
 
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.15),
-
                 borderRadius: BorderRadius.circular(14),
               ),
 
@@ -373,7 +435,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(width: 15),
 
-            // ================= TEXT =================
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,7 +442,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     title,
-
                     style: TextStyle(
                       color: colorScheme.onSurface,
                       fontSize: 16,
@@ -393,7 +453,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Text(
                     subtitle,
-
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 13,
@@ -403,7 +462,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            // ================= ARROW =================
             Icon(
               Icons.arrow_forward_ios,
               color: colorScheme.onSurfaceVariant,

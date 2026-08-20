@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../Authentication/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
+
   const SplashScreen({super.key, required this.onThemeChanged});
 
   @override
@@ -27,11 +29,15 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
+          // ================= LOGO =================
           Center(
             child: Image.asset(
               'assets/images/ashwa.png',
@@ -40,6 +46,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
+          // ================= APP NAME =================
           Positioned(
             bottom: 60,
             left: 0,
@@ -49,15 +56,19 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 Text(
                   'Ashwa',
-                  style: TextStyle(color: Colors.white, fontSize: 33),
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 33,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
 
-                SizedBox(height: 0),
+                const SizedBox(height: 4),
 
                 Text(
                   'Your Intelligent Horse Riding Trainer',
                   style: TextStyle(
-                    color: Color.fromARGB(255, 198, 197, 197),
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),

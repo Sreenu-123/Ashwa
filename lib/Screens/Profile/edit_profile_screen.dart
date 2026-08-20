@@ -9,6 +9,7 @@ class EditProfileScreen extends StatefulWidget {
   final String age;
   final String horseName;
   final String ridingLevel;
+  final String? currentProfileImagePath;
 
   const EditProfileScreen({
     super.key,
@@ -17,6 +18,7 @@ class EditProfileScreen extends StatefulWidget {
     required this.age,
     required this.horseName,
     required this.ridingLevel,
+    this.currentProfileImagePath,
   });
 
   @override
@@ -39,7 +41,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   XFile? selectedImage;
 
-  // ================= INIT STATE =================
+  // ================= INIT =================
 
   @override
   void initState() {
@@ -56,18 +58,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     ridingLevel = widget.ridingLevel;
   }
 
-  // ================= PICK PROFILE IMAGE =================
+  // ================= PICK IMAGE =================
 
   Future<void> pickProfileImage() async {
     final ImagePicker picker = ImagePicker();
 
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
 
-    if (image != null) {
-      setState(() {
-        selectedImage = image;
-      });
+    if (image == null) {
+      return;
     }
+
+    if (!mounted) return;
+
+    setState(() {
+      selectedImage = image;
+    });
+  }
+
+  // ================= SAVE PROFILE =================
+
+  void saveProfile() {
+    final updatedProfile = {
+      'name': nameController.text.trim(),
+      'email': emailController.text.trim(),
+      'age': ageController.text.trim(),
+      'horseName': horseController.text.trim(),
+      'ridingLevel': ridingLevel,
+      'profileImagePath': selectedImage?.path,
+
+      // Return newly selected image.
+      'profileImagePath': selectedImage?.path,
+    };
+
+    Navigator.pop(context, updatedProfile);
   }
 
   // ================= DISPOSE =================
@@ -82,28 +109,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  // ================= SAVE PROFILE =================
-
-  void saveProfile() {
-    final updatedProfile = {
-      'name': nameController.text.trim(),
-      'email': emailController.text.trim(),
-      'age': ageController.text.trim(),
-      'horseName': horseController.text.trim(),
-      'ridingLevel': ridingLevel,
-      'profileImagePath': selectedImage?.path,
-    };
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully'),
-        backgroundColor: Colors.blue,
-      ),
-    );
-
-    Navigator.pop(context, updatedProfile);
-  }
-
   // ================= BUILD =================
 
   @override
@@ -116,6 +121,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // ================= APP BAR =================
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
         elevation: 0,
 
         leading: IconButton(
@@ -132,6 +138,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         title: Text(
           'Edit Profile',
+
           style: TextStyle(
             color: colorScheme.onSurface,
             fontSize: 20,
@@ -153,7 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              // ================= PROFILE PICTURE =================
+              // ================= PROFILE PHOTO =================
               Center(
                 child: Stack(
                   children: [
@@ -175,13 +182,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 fit: BoxFit.cover,
                               ),
                             )
-                          : Icon(
-                              Icons.person,
-                              color: colorScheme.onSurface,
-                              size: 58,
-                            ),
+                          : _buildExistingImage(colorScheme),
                     ),
 
+                    // ================= CAMERA BUTTON =================
                     Positioned(
                       right: 0,
                       bottom: 2,
@@ -217,6 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 12),
 
+              // ================= CHANGE PHOTO =================
               Center(
                 child: GestureDetector(
                   onTap: pickProfileImage,
@@ -248,7 +253,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ================= NAME =================
+              // NAME
               profileField(
                 controller: nameController,
                 label: 'Name',
@@ -257,7 +262,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ================= EMAIL =================
+              // EMAIL
               profileField(
                 controller: emailController,
                 label: 'Email',
@@ -267,7 +272,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ================= AGE =================
+              // AGE
               profileField(
                 controller: ageController,
                 label: 'Age',
@@ -297,10 +302,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   borderRadius: BorderRadius.circular(14),
 
-                  border: Border.all(
-                    color: colorScheme.outlineVariant,
-                    width: 1,
-                  ),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
 
                 child: DropdownButtonFormField<String>(
@@ -338,17 +340,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       value: 'Beginner',
                       child: Text('Beginner'),
                     ),
-
                     DropdownMenuItem(
                       value: 'Intermediate',
                       child: Text('Intermediate'),
                     ),
-
                     DropdownMenuItem(
                       value: 'Advanced',
                       child: Text('Advanced'),
                     ),
-
                     DropdownMenuItem(
                       value: 'Professional',
                       child: Text('Professional'),
@@ -367,7 +366,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ================= HORSE NAME =================
+              // HORSE NAME
               profileField(
                 controller: horseController,
                 label: 'Horse Name',
@@ -376,7 +375,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 35),
 
-              // ================= SAVE BUTTON =================
+              // ================= SAVE =================
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -431,6 +430,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  // ================= EXISTING IMAGE =================
+
+  Widget _buildExistingImage(ColorScheme colorScheme) {
+    final path = widget.currentProfileImagePath;
+
+    if (path != null && path.isNotEmpty) {
+      final file = File(path);
+
+      if (file.existsSync()) {
+        return ClipOval(
+          child: Image.file(file, width: 105, height: 105, fit: BoxFit.cover),
+        );
+      }
+    }
+
+    return Icon(Icons.person, color: colorScheme.onSurface, size: 58);
   }
 
   // ================= PROFILE FIELD =================

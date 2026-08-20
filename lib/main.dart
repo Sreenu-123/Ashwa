@@ -8,16 +8,17 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
 
-  final savedAppearance = prefs.getString('settings_appearance') ?? 'Dark';
+  // Default appearance is Light
+  final savedAppearance = prefs.getString('settings_appearance') ?? 'Light';
 
   ThemeMode initialTheme;
 
-  if (savedAppearance == 'Light') {
-    initialTheme = ThemeMode.light;
+  if (savedAppearance == 'Dark') {
+    initialTheme = ThemeMode.dark;
   } else if (savedAppearance == 'System') {
     initialTheme = ThemeMode.system;
   } else {
-    initialTheme = ThemeMode.dark;
+    initialTheme = ThemeMode.light;
   }
 
   runApp(AshwaApp(initialThemeMode: initialTheme));
