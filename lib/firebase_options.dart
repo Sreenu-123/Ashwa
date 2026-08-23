@@ -59,22 +59,22 @@ class DefaultFirebaseOptions {
     projectId: 'ashwa-6ffb7',
     storageBucket: 'ashwa-6ffb7.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyD3_2h7L_aO01i0Earj8wgAHMQhpXHJcAE',
     appId: '1:571986548747:ios:ab7bcd46d9bd1391c30f0e',
     messagingSenderId: '571986548747',
     projectId: 'ashwa-6ffb7',
     storageBucket: 'ashwa-6ffb7.firebasestorage.app',
+    iosClientId: '571986548747-9kmsfr4trhtd2vlkgl2kkirsq8hrhqp2.apps.googleusercontent.com',
     iosBundleId: 'com.example.ashwaApp',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyD3_2h7L_aO01i0Earj8wgAHMQhpXHJcAE',
     appId: '1:571986548747:ios:ab7bcd46d9bd1391c30f0e',
     messagingSenderId: '571986548747',
     projectId: 'ashwa-6ffb7',
     storageBucket: 'ashwa-6ffb7.firebasestorage.app',
+    iosClientId: '571986548747-9kmsfr4trhtd2vlkgl2kkirsq8hrhqp2.apps.googleusercontent.com',
     iosBundleId: 'com.example.ashwaApp',
   );
 }

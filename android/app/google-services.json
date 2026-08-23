@@ -12,7 +12,12 @@
           "package_name": "com.example.ashwa_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "571986548747-b5shnungrit4sv0u4b00fjlfm49409h4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAagD4CDL4eH1SDOe06WvOgERGhrUzLW48"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "571986548747-b5shnungrit4sv0u4b00fjlfm49409h4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "571986548747-9kmsfr4trhtd2vlkgl2kkirsq8hrhqp2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ashwaApp"
+              }
+            }
+          ]
         }
       }
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../Home/main_navigation_screen.dart';
 import './forget_password_screen.dart';
@@ -36,12 +37,32 @@ class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // ============================================================
+  // GOOGLE SIGN-IN
+  // ============================================================
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  late final Future<void> _googleSignInInitialization;
+
+  // ============================================================
   // VARIABLES
   // ============================================================
 
   bool obscurePassword = true;
 
   bool isLoading = false;
+
+  // ============================================================
+  // INIT STATE
+  // ============================================================
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize Google Sign-In exactly once.
+    _googleSignInInitialization = _googleSignIn.initialize();
+  }
 
   // ============================================================
   // DISPOSE
@@ -56,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // ============================================================
-  // LOGIN
+  // EMAIL / PASSWORD LOGIN
   // ============================================================
 
   Future<void> login() async {
@@ -161,6 +182,163 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      // ==========================================================
+      // STOP LOADING
+      // ==========================================================
+
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  // ============================================================
+  // GOOGLE SIGN-IN
+  // ============================================================
+
+  Future<void> signInWithGoogle() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+
+    // Prevent multiple login attempts
+    if (isLoading) {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // ==========================================================
+      // WAIT FOR GOOGLE SIGN-IN INITIALIZATION
+      // ==========================================================
+
+      await _googleSignInInitialization;
+
+      // ==========================================================
+      // CHECK PLATFORM SUPPORT
+      // ==========================================================
+
+      if (!_googleSignIn.supportsAuthenticate()) {
+        throw Exception('Google Sign-In is not supported on this platform.');
+      }
+
+      // ==========================================================
+      // GOOGLE ACCOUNT SIGN-IN
+      // ==========================================================
+
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+
+      // ==========================================================
+      // GET GOOGLE AUTHENTICATION
+      // ==========================================================
+
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      // ==========================================================
+      // CHECK ID TOKEN
+      // ==========================================================
+
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception('Google Sign-In failed: ID token is missing.');
+      }
+
+      // ==========================================================
+      // CREATE FIREBASE CREDENTIAL
+      // ==========================================================
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        idToken: idToken,
+      );
+
+      // ==========================================================
+      // SIGN IN TO FIREBASE
+      // ==========================================================
+
+      await _auth.signInWithCredential(credential);
+
+      if (!mounted) return;
+
+      // ==========================================================
+      // SUCCESS
+      // ==========================================================
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google Sign-In successful!')),
+      );
+
+      // ==========================================================
+      // GO TO HOME
+      // ==========================================================
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              NavigationScreen(onThemeChanged: widget.onThemeChanged),
+        ),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+
+      // ==========================================================
+      // FIREBASE GOOGLE LOGIN ERRORS
+      // ==========================================================
+
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          message =
+              'An account already exists with a different sign-in method.';
+          break;
+
+        case 'invalid-credential':
+          message = 'Google credential is invalid. Please try again.';
+          break;
+
+        case 'operation-not-allowed':
+          message = 'Google Sign-In is not enabled in Firebase.';
+          break;
+
+        case 'network-request-failed':
+          message = 'Network error. Please check your internet connection.';
+          break;
+
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+
+        default:
+          message = e.message ?? 'Google Sign-In failed. Please try again.';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } on GoogleSignInException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In failed: ${e.description ?? e.code}'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Google Sign-In was cancelled or failed.'),
         ),
       );
     } finally {
@@ -456,15 +634,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         title: 'Google',
                         iconSize: 22,
 
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Google Sign-In will be connected next.',
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: signInWithGoogle,
                       ),
                     ),
 
