@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../Home/main_navigation_screen.dart';
 import './forget_password_screen.dart';
@@ -29,10 +30,18 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // ============================================================
-  // PASSWORD VISIBILITY
+  // FIREBASE AUTH
+  // ============================================================
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // ============================================================
+  // VARIABLES
   // ============================================================
 
   bool obscurePassword = true;
+
+  bool isLoading = false;
 
   // ============================================================
   // DISPOSE
@@ -50,18 +59,121 @@ class _LoginScreenState extends State<LoginScreen> {
   // LOGIN
   // ============================================================
 
-  void login() {
+  Future<void> login() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+
+    // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            NavigationScreen(onThemeChanged: widget.onThemeChanged),
-      ),
-    );
+    // Start loading
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // ==========================================================
+      // FIREBASE EMAIL/PASSWORD LOGIN
+      // ==========================================================
+
+      await _auth.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      // ==========================================================
+      // SUCCESS
+      // ==========================================================
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Login successful!')));
+
+      // ==========================================================
+      // GO TO HOME
+      // ==========================================================
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              NavigationScreen(onThemeChanged: widget.onThemeChanged),
+        ),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+
+      // ==========================================================
+      // FIREBASE ERROR HANDLING
+      // ==========================================================
+
+      switch (e.code) {
+        case 'invalid-email':
+          message = 'Please enter a valid email address.';
+          break;
+
+        case 'user-not-found':
+          message = 'No account found with this email.';
+          break;
+
+        case 'wrong-password':
+        case 'invalid-credential':
+          message = 'Incorrect email or password.';
+          break;
+
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+
+        case 'too-many-requests':
+          message = 'Too many login attempts. Please try again later.';
+          break;
+
+        case 'network-request-failed':
+          message = 'Network error. Please check your internet connection.';
+          break;
+
+        case 'operation-not-allowed':
+          message = 'Email/Password authentication is not enabled.';
+          break;
+
+        default:
+          message = e.message ?? 'Login failed. Please try again.';
+      }
+
+      // ==========================================================
+      // SHOW ERROR
+      // ==========================================================
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      // ==========================================================
+      // STOP LOADING
+      // ==========================================================
+
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   // ============================================================
@@ -88,9 +200,9 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                // ============================================================
+                // ========================================================
                 // HEADER
-                // ============================================================
+                // ========================================================
                 const SizedBox(height: 20),
 
                 Text(
@@ -98,11 +210,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   style: TextStyle(
                     color: colorScheme.onSurface,
-
                     fontSize: 32,
-
                     fontWeight: FontWeight.bold,
-
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -114,24 +223,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
-
                     fontSize: 15,
                   ),
                 ),
 
                 const SizedBox(height: 32),
 
-                // ============================================================
+                // ========================================================
                 // EMAIL
-                // ============================================================
+                // ========================================================
                 Text(
                   'Email',
 
                   style: TextStyle(
                     color: colorScheme.onSurface,
-
                     fontSize: 14,
-
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -166,17 +272,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // ============================================================
+                // ========================================================
                 // PASSWORD
-                // ============================================================
+                // ========================================================
                 Text(
                   'Password',
 
                   style: TextStyle(
                     color: colorScheme.onSurface,
-
                     fontSize: 14,
-
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -228,21 +332,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 8),
 
-                // ============================================================
+                // ========================================================
                 // FORGOT PASSWORD
-                // ============================================================
+                // ========================================================
                 Align(
                   alignment: Alignment.centerRight,
 
                   child: TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ForgetPasswordScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgetPasswordScreen(),
+                              ),
+                            );
+                          },
 
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -262,20 +369,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 18),
 
-                // ============================================================
+                // ========================================================
                 // LOGIN BUTTON
-                // ============================================================
+                // ========================================================
                 SizedBox(
                   width: double.infinity,
                   height: 56,
 
                   child: ElevatedButton(
-                    onPressed: login,
+                    onPressed: isLoading ? null : login,
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
 
                       foregroundColor: Colors.white,
+
+                      disabledBackgroundColor: Colors.blue.withValues(
+                        alpha: 0.5,
+                      ),
 
                       elevation: 0,
 
@@ -284,22 +395,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    child: const Text(
-                      'Login',
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
 
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Login',
+
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
 
                 const SizedBox(height: 28),
 
-                // ============================================================
+                // ========================================================
                 // DIVIDER
-                // ============================================================
+                // ========================================================
                 Row(
                   children: [
                     Expanded(child: Divider(color: colorScheme.outlineVariant)),
@@ -312,7 +433,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         style: TextStyle(
                           color: colorScheme.onSurfaceVariant,
-
                           fontSize: 13,
                         ),
                       ),
@@ -324,9 +444,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 22),
 
-                // ============================================================
+                // ========================================================
                 // SOCIAL LOGIN
-                // ============================================================
+                // ========================================================
                 Row(
                   children: [
                     Expanded(
@@ -335,7 +455,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         assetPath: 'assets/images/google.png',
                         title: 'Google',
                         iconSize: 22,
-                        onPressed: () {},
+
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Google Sign-In will be connected next.',
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
 
@@ -347,7 +476,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         assetPath: 'assets/images/facebook.png',
                         title: 'Facebook',
                         iconSize: 22,
-                        onPressed: () {},
+
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Facebook Login will be connected next.',
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -355,9 +493,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 45),
 
-                // ============================================================
+                // ========================================================
                 // REGISTER
-                // ============================================================
+                // ========================================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
 
@@ -367,22 +505,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
-
                         fontSize: 14,
                       ),
                     ),
 
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegisterScreen(
-                              onThemeChanged: widget.onThemeChanged,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RegisterScreen(
+                                    onThemeChanged: widget.onThemeChanged,
+                                  ),
+                                ),
+                              );
+                            },
 
                       child: const Text(
                         'Register',
@@ -396,11 +535,59 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 10),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // SOCIAL LOGIN BUTTON
+  // ============================================================
+
+  Widget socialLoginButton({
+    required BuildContext context,
+    required String assetPath,
+    required String title,
+    required double iconSize,
+    required VoidCallback onPressed,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 52,
+
+      child: OutlinedButton(
+        onPressed: isLoading ? null : onPressed,
+
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: colorScheme.outlineVariant),
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+
+          children: [
+            Image.asset(assetPath, width: iconSize, height: iconSize),
+
+            const SizedBox(width: 8),
+
+            Text(
+              title,
+
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -458,50 +645,6 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(16),
 
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-      ),
-    );
-  }
-
-  // ============================================================
-  // SOCIAL LOGIN BUTTON
-  // ============================================================
-
-  Widget socialLoginButton({
-    required BuildContext context,
-    required String assetPath,
-    required String title,
-    required double iconSize,
-    required VoidCallback onPressed,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return SizedBox(
-      height: 54,
-
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-
-        icon: Image.asset(assetPath, width: iconSize, height: iconSize),
-
-        label: Text(
-          title,
-
-          style: TextStyle(
-            color: colorScheme.onSurface,
-
-            fontSize: 14,
-
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: colorScheme.outlineVariant),
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
       ),
     );
   }
