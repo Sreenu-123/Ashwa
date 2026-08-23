@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "571986548747",
+    "project_id": "ashwa-6ffb7",
+    "storage_bucket": "ashwa-6ffb7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:571986548747:android:e7bc03e3857457c0c30f0e",
+        "android_client_info": {
+          "package_name": "com.example.ashwa_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAagD4CDL4eH1SDOe06WvOgERGhrUzLW48"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

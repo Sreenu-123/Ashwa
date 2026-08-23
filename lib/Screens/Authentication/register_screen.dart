@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../Authentication/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -28,12 +29,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // ============================================================
+  // FIREBASE AUTH
+  // ============================================================
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // ============================================================
   // VARIABLES
   // ============================================================
 
   bool isChecked = false;
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
+  bool isLoading = false;
 
   // ============================================================
   // DISPOSE
@@ -53,10 +61,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // REGISTER
   // ============================================================
 
-  void register() {
+  Future<void> register() async {
+    FocusScope.of(context).unfocus();
+
+    // ------------------------------------------------------------
+    // VALIDATE FORM
+    // ------------------------------------------------------------
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    // ------------------------------------------------------------
+    // CHECK TERMS
+    // ------------------------------------------------------------
 
     if (!isChecked) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,11 +88,121 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    // Backend registration will be connected later.
+    // ------------------------------------------------------------
+    // START LOADING
+    // ------------------------------------------------------------
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account creation will be connected soon.')),
-    );
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // ==========================================================
+      // CREATE FIREBASE ACCOUNT
+      // ==========================================================
+
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+          );
+
+      // ==========================================================
+      // SAVE USER NAME
+      // ==========================================================
+
+      await userCredential.user?.updateDisplayName(nameController.text.trim());
+
+      // Refresh Firebase user
+      await userCredential.user?.reload();
+
+      if (!mounted) return;
+
+      // ==========================================================
+      // ACCOUNT CREATED SUCCESSFULLY
+      // ==========================================================
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created successfully!')),
+      );
+
+      // ==========================================================
+      // IMPORTANT
+      //
+      // Firebase automatically signs the user in after
+      // createUserWithEmailAndPassword().
+      //
+      // Since we want the user to go to Login Screen and
+      // manually login, sign the user out first.
+      // ==========================================================
+
+      await _auth.signOut();
+
+      if (!mounted) return;
+
+      // ==========================================================
+      // GO TO LOGIN SCREEN
+      // ==========================================================
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              LoginScreen(onThemeChanged: widget.onThemeChanged),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+
+      switch (e.code) {
+        case 'email-already-in-use':
+          message = 'An account already exists with this email.';
+          break;
+
+        case 'invalid-email':
+          message = 'Please enter a valid email address.';
+          break;
+
+        case 'weak-password':
+          message = 'Password is too weak. Use a stronger password.';
+          break;
+
+        case 'operation-not-allowed':
+          message = 'Email/Password authentication is not enabled.';
+          break;
+
+        case 'network-request-failed':
+          message = 'Network error. Please check your internet connection.';
+          break;
+
+        case 'too-many-requests':
+          message = 'Too many attempts. Please try again later.';
+          break;
+
+        default:
+          message = e.message ?? 'Account creation failed.';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   // ============================================================
@@ -101,9 +229,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                // ============================================================
+                // ========================================================
                 // HEADER
-                // ============================================================
+                // ========================================================
                 const SizedBox(height: 20),
 
                 Text(
@@ -128,9 +256,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 32),
 
-                // ============================================================
+                // ========================================================
                 // FULL NAME
-                // ============================================================
+                // ========================================================
                 fieldLabel(context, 'Full Name'),
 
                 const SizedBox(height: 8),
@@ -163,9 +291,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 20),
 
-                // ============================================================
+                // ========================================================
                 // EMAIL
-                // ============================================================
+                // ========================================================
                 fieldLabel(context, 'Email'),
 
                 const SizedBox(height: 8),
@@ -198,9 +326,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 20),
 
-                // ============================================================
+                // ========================================================
                 // PASSWORD
-                // ============================================================
+                // ========================================================
                 fieldLabel(context, 'Password'),
 
                 const SizedBox(height: 8),
@@ -250,9 +378,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 20),
 
-                // ============================================================
+                // ========================================================
                 // CONFIRM PASSWORD
-                // ============================================================
+                // ========================================================
                 fieldLabel(context, 'Confirm Password'),
 
                 const SizedBox(height: 8),
@@ -302,9 +430,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 18),
 
-                // ============================================================
+                // ========================================================
                 // TERMS & CONDITIONS
-                // ============================================================
+                // ========================================================
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
 
@@ -345,20 +473,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 18),
 
-                // ============================================================
+                // ========================================================
                 // CREATE ACCOUNT BUTTON
-                // ============================================================
+                // ========================================================
                 SizedBox(
                   width: double.infinity,
                   height: 56,
 
                   child: ElevatedButton(
-                    onPressed: register,
+                    onPressed: isLoading ? null : register,
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
 
                       foregroundColor: Colors.white,
+
+                      disabledBackgroundColor: Colors.blue.withValues(
+                        alpha: 0.5,
+                      ),
 
                       elevation: 0,
 
@@ -367,22 +499,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    child: const Text(
-                      'Create Account',
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
 
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Account',
+
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
 
                 const SizedBox(height: 18),
 
-                // ============================================================
+                // ========================================================
                 // OR DIVIDER
-                // ============================================================
+                // ========================================================
                 Row(
                   children: [
                     Expanded(child: Divider(color: colorScheme.outlineVariant)),
@@ -407,9 +549,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 14),
 
-                // ============================================================
+                // ========================================================
                 // BACK TO LOGIN
-                // ============================================================
+                // ========================================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
 
@@ -425,26 +567,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
 
-                          MaterialPageRoute(
-                            builder: (context) => LoginScreen(
-                              onThemeChanged: widget.onThemeChanged,
-                            ),
-                          ),
-                        );
-                      },
+                                MaterialPageRoute(
+                                  builder: (context) => LoginScreen(
+                                    onThemeChanged: widget.onThemeChanged,
+                                  ),
+                                ),
+                              );
+                            },
 
                       child: const Text(
                         'Login',
 
                         style: TextStyle(
                           color: Colors.blue,
-
                           fontSize: 14,
-
                           fontWeight: FontWeight.bold,
                         ),
                       ),
