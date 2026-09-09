@@ -1,5 +1,11 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../Authentication/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -21,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final TextEditingController ageController = TextEditingController();
 
   // ============================================================
   // FORM
@@ -29,10 +36,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // ============================================================
-  // FIREBASE AUTH
+  // FIREBASE
   // ============================================================
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  // ============================================================
+  // IMAGE PICKER
+  // ============================================================
+
+  final ImagePicker _imagePicker = ImagePicker();
+
+  File? selectedProfileImage;
 
   // ============================================================
   // VARIABLES
@@ -42,6 +59,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
   bool isLoading = false;
+
+  String? selectedRidingExperience;
+  String? selectedRidingLevel;
+  String? selectedRidingDiscipline;
+  String? selectedPrimaryGoal;
+
+  // ============================================================
+  // OPTIONS
+  // ============================================================
+
+  final List<String> ridingExperienceOptions = [
+    'Less than 1 year',
+    '1 - 3 years',
+    '3 - 5 years',
+    '5+ years',
+  ];
+
+  final List<String> ridingLevelOptions = [
+    'Beginner',
+    'Intermediate',
+    'Advanced',
+    'Professional',
+  ];
+
+  final List<String> ridingDisciplineOptions = [
+    'Dressage',
+    'Show Jumping',
+    'Eventing',
+    'Endurance',
+    'Western Riding',
+    'Leisure Riding',
+    'Other',
+  ];
+
+  final List<String> primaryGoalOptions = [
+    'Learn Horse Riding',
+    'Improve Riding Skills',
+    'Competition',
+    'Fitness & Exercise',
+    'Professional Career',
+    'Recreational Riding',
+  ];
 
   // ============================================================
   // DISPOSE
@@ -53,8 +112,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    ageController.dispose();
 
     super.dispose();
+  }
+
+  // ============================================================
+  // PICK PROFILE PICTURE
+  // ============================================================
+
+  Future<void> pickProfileImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        selectedProfileImage = File(pickedFile.path);
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to select profile picture.')),
+      );
+    }
+  }
+
+  // ============================================================
+  // UPLOAD PROFILE PICTURE
+  // ============================================================
+
+  Future<String?> uploadProfileImage(String uid) async {
+    if (selectedProfileImage == null) {
+      return null;
+    }
+
+    final Reference storageReference = _storage
+        .ref()
+        .child('profile_images')
+        .child('$uid.jpg');
+
+    await storageReference.putFile(selectedProfileImage!);
+
+    return await storageReference.getDownloadURL();
   }
 
   // ============================================================
@@ -73,7 +179,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // ------------------------------------------------------------
-    // CHECK TERMS
+    // PROFILE IMAGE
+    // ------------------------------------------------------------
+
+    if (selectedProfileImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a profile picture.')),
+      );
+
+      return;
+    }
+
+    // ------------------------------------------------------------
+    // TERMS
     // ------------------------------------------------------------
 
     if (!isChecked) {
@@ -89,6 +207,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // ------------------------------------------------------------
+    // DROPDOWN VALIDATION
+    // ------------------------------------------------------------
+
+    if (selectedRidingExperience == null ||
+        selectedRidingLevel == null ||
+        selectedRidingDiscipline == null ||
+        selectedPrimaryGoal == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please complete all riding details.')),
+      );
+
+      return;
+    }
+
+    // ------------------------------------------------------------
     // START LOADING
     // ------------------------------------------------------------
 
@@ -96,44 +229,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isLoading = true;
     });
 
+    UserCredential? userCredential;
+
     try {
       // ==========================================================
-      // CREATE FIREBASE ACCOUNT
+      // CREATE FIREBASE AUTH ACCOUNT
       // ==========================================================
 
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text,
-          );
-
-      // ==========================================================
-      // SAVE USER NAME
-      // ==========================================================
-
-      await userCredential.user?.updateDisplayName(nameController.text.trim());
-
-      // Refresh Firebase user
-      await userCredential.user?.reload();
-
-      if (!mounted) return;
-
-      // ==========================================================
-      // ACCOUNT CREATED SUCCESSFULLY
-      // ==========================================================
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created successfully!')),
+      userCredential = await _auth.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
       );
 
+      final User? user = userCredential.user;
+
+      if (user == null) {
+        throw Exception('Unable to create user account.');
+      }
+
       // ==========================================================
-      // IMPORTANT
+      // UPDATE FIREBASE DISPLAY NAME
+      // ==========================================================
+
+      await user.updateDisplayName(nameController.text.trim());
+
+      // ==========================================================
+      // UPLOAD PROFILE IMAGE
+      // ==========================================================
+
+      final String? profileImageUrl = await uploadProfileImage(user.uid);
+
+      // ==========================================================
+      // SAVE PROFILE DATA TO FIRESTORE
+      // ==========================================================
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'fullName': nameController.text.trim(),
+        'email': emailController.text.trim(),
+        'age': int.parse(ageController.text.trim()),
+        'ridingExperience': selectedRidingExperience,
+        'ridingLevel': selectedRidingLevel,
+        'ridingDiscipline': selectedRidingDiscipline,
+        'primaryGoal': selectedPrimaryGoal,
+        'profileImageUrl': profileImageUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // ==========================================================
+      // LOGOUT
       //
-      // Firebase automatically signs the user in after
-      // createUserWithEmailAndPassword().
+      // createUserWithEmailAndPassword automatically signs
+      // the user in.
       //
-      // Since we want the user to go to Login Screen and
-      // manually login, sign the user out first.
+      // Our ASHWA flow:
+      //
+      // Register → Login → Main Navigation
+      //
+      // So sign out before going back to Login.
       // ==========================================================
 
       await _auth.signOut();
@@ -141,7 +294,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       // ==========================================================
-      // GO TO LOGIN SCREEN
+      // SUCCESS MESSAGE
+      // ==========================================================
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please login.'),
+        ),
+      );
+
+      // ==========================================================
+      // GO TO LOGIN
       // ==========================================================
 
       Navigator.pushReplacement(
@@ -152,6 +315,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
     } on FirebaseAuthException catch (e) {
+      // ----------------------------------------------------------
+      // IF FIREBASE AUTH ACCOUNT WAS CREATED BUT PROFILE SAVE
+      // FAILED, DELETE THE AUTH ACCOUNT TO AVOID HALF-REGISTERED
+      // USERS.
+      // ----------------------------------------------------------
+
+      if (e.code != 'email-already-in-use') {
+        // Nothing here intentionally.
+      }
+
       if (!mounted) return;
 
       String message;
@@ -192,9 +365,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Something went wrong. Please try again.'),
-        ),
+        SnackBar(content: Text('Registration failed. Please try again.')),
       );
     } finally {
       if (mounted) {
@@ -232,6 +403,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // ========================================================
                 // HEADER
                 // ========================================================
+
                 const SizedBox(height: 20),
 
                 Text(
@@ -247,14 +419,89 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Sign up to start your riding journey',
+                  'Create your ASHWA riding profile',
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 15,
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 30),
+
+                // ========================================================
+                // PROFILE PICTURE
+                // ========================================================
+                Center(
+                  child: GestureDetector(
+                    onTap: isLoading ? null : pickProfileImage,
+
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 110,
+                          height: 110,
+
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colorScheme.surfaceContainer,
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                              width: 1.5,
+                            ),
+                          ),
+
+                          child: ClipOval(
+                            child: selectedProfileImage != null
+                                ? Image.file(
+                                    selectedProfileImage!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Icon(
+                                    Icons.person_outline,
+                                    size: 52,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                          ),
+                        ),
+
+                        Positioned(
+                          right: 0,
+                          bottom: 2,
+
+                          child: Container(
+                            width: 34,
+                            height: 34,
+
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              shape: BoxShape.circle,
+                            ),
+
+                            child: const Icon(
+                              Icons.camera_alt_outlined,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Center(
+                  child: Text(
+                    'Add Profile Picture',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
 
                 // ========================================================
                 // FULL NAME
@@ -265,7 +512,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextFormField(
                   controller: nameController,
-
                   textCapitalization: TextCapitalization.words,
 
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
@@ -316,7 +562,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return 'Please enter your email';
                     }
 
-                    if (!value.contains('@')) {
+                    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+                    if (!emailRegex.hasMatch(value.trim())) {
                       return 'Please enter a valid email';
                     }
 
@@ -357,7 +605,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             obscurePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -409,7 +656,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             obscureConfirmPassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -428,10 +674,139 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
 
+                const SizedBox(height: 20),
+
+                // ========================================================
+                // AGE
+                // ========================================================
+                fieldLabel(context, 'Age'),
+
+                const SizedBox(height: 8),
+
+                TextFormField(
+                  controller: ageController,
+
+                  keyboardType: TextInputType.number,
+
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
+
+                  decoration: inputDecoration(
+                    context,
+                    hintText: 'Enter your age',
+                    icon: Icons.cake_outlined,
+                  ),
+
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your age';
+                    }
+
+                    final age = int.tryParse(value.trim());
+
+                    if (age == null) {
+                      return 'Please enter a valid age';
+                    }
+
+                    if (age < 5 || age > 100) {
+                      return 'Please enter a valid age';
+                    }
+
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // ========================================================
+                // RIDING EXPERIENCE
+                // ========================================================
+                fieldLabel(context, 'Riding Experience'),
+
+                const SizedBox(height: 8),
+
+                dropdownField(
+                  context: context,
+                  value: selectedRidingExperience,
+                  hintText: 'Select your riding experience',
+                  icon: Icons.history_outlined,
+                  items: ridingExperienceOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRidingExperience = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // ========================================================
+                // RIDING LEVEL
+                // ========================================================
+                fieldLabel(context, 'Riding Level'),
+
+                const SizedBox(height: 8),
+
+                dropdownField(
+                  context: context,
+                  value: selectedRidingLevel,
+                  hintText: 'Select your riding level',
+                  icon: Icons.trending_up_outlined,
+                  items: ridingLevelOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRidingLevel = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // ========================================================
+                // RIDING DISCIPLINE
+                // ========================================================
+                fieldLabel(context, 'Riding Discipline'),
+
+                const SizedBox(height: 8),
+
+                dropdownField(
+                  context: context,
+                  value: selectedRidingDiscipline,
+                  hintText: 'Select your riding discipline',
+                  icon: Icons.sports_outlined,
+                  items: ridingDisciplineOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRidingDiscipline = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // ========================================================
+                // PRIMARY RIDING GOAL
+                // ========================================================
+                fieldLabel(context, 'Primary Riding Goal'),
+
+                const SizedBox(height: 8),
+
+                dropdownField(
+                  context: context,
+                  value: selectedPrimaryGoal,
+                  hintText: 'Select your primary goal',
+                  icon: Icons.flag_outlined,
+                  items: primaryGoalOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedPrimaryGoal = value;
+                    });
+                  },
+                ),
+
                 const SizedBox(height: 18),
 
                 // ========================================================
-                // TERMS & CONDITIONS
+                // TERMS
                 // ========================================================
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,14 +816,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       value: isChecked,
 
                       activeColor: Colors.blue,
-
                       checkColor: Colors.white,
 
-                      onChanged: (value) {
-                        setState(() {
-                          isChecked = value ?? false;
-                        });
-                      },
+                      onChanged: isLoading
+                          ? null
+                          : (value) {
+                              setState(() {
+                                isChecked = value ?? false;
+                              });
+                            },
                     ),
 
                     Expanded(
@@ -460,9 +836,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
-
                             fontSize: 13,
-
                             height: 1.4,
                           ),
                         ),
@@ -537,7 +911,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                         style: TextStyle(
                           color: colorScheme.onSurfaceVariant,
-
                           fontSize: 13,
                         ),
                       ),
@@ -561,7 +934,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
-
                         fontSize: 14,
                       ),
                     ),
@@ -572,7 +944,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           : () {
                               Navigator.push(
                                 context,
-
                                 MaterialPageRoute(
                                   builder: (context) => LoginScreen(
                                     onThemeChanged: widget.onThemeChanged,
@@ -602,6 +973,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   // ============================================================
+  // DROPDOWN FIELD
+  // ============================================================
+
+  Widget dropdownField({
+    required BuildContext context,
+    required String? value,
+    required String hintText,
+    required IconData icon,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+
+      isExpanded: true,
+
+      icon: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: colorScheme.onSurfaceVariant,
+      ),
+
+      style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
+
+      decoration: inputDecoration(context, hintText: hintText, icon: icon),
+
+      dropdownColor: colorScheme.surface,
+
+      items: items.map((item) {
+        return DropdownMenuItem<String>(value: item, child: Text(item));
+      }).toList(),
+
+      onChanged: onChanged,
+    );
+  }
+
+  // ============================================================
   // FIELD LABEL
   // ============================================================
 
@@ -613,9 +1022,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       style: TextStyle(
         color: colorScheme.onSurface,
-
         fontSize: 14,
-
         fontWeight: FontWeight.w600,
       ),
     );

@@ -21,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   // ============================================================
 
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController passwordController = TextEditingController();
 
   // ============================================================
@@ -49,7 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
   // ============================================================
 
   bool obscurePassword = true;
-
   bool isLoading = false;
 
   // ============================================================
@@ -61,7 +59,11 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
 
     // Initialize Google Sign-In exactly once.
-    _googleSignInInitialization = _googleSignIn.initialize();
+    //
+    // This is the WEB OAuth client ID from google-services.json.
+    _googleSignInInitialization = _googleSignIn.initialize(
+      
+    );
   }
 
   // ============================================================
@@ -81,24 +83,17 @@ class _LoginScreenState extends State<LoginScreen> {
   // ============================================================
 
   Future<void> login() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
 
-    // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Start loading
     setState(() {
       isLoading = true;
     });
 
     try {
-      // ==========================================================
-      // FIREBASE EMAIL/PASSWORD LOGIN
-      // ==========================================================
-
       await _auth.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
@@ -106,17 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      // ==========================================================
-      // SUCCESS
-      // ==========================================================
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Login successful!')));
-
-      // ==========================================================
-      // GO TO HOME
-      // ==========================================================
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -130,10 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       String message;
-
-      // ==========================================================
-      // FIREBASE ERROR HANDLING
-      // ==========================================================
 
       switch (e.code) {
         case 'invalid-email':
@@ -169,10 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
           message = e.message ?? 'Login failed. Please try again.';
       }
 
-      // ==========================================================
-      // SHOW ERROR
-      // ==========================================================
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
@@ -185,10 +164,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } finally {
-      // ==========================================================
-      // STOP LOADING
-      // ==========================================================
-
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -202,10 +177,8 @@ class _LoginScreenState extends State<LoginScreen> {
   // ============================================================
 
   Future<void> signInWithGoogle() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
 
-    // Prevent multiple login attempts
     if (isLoading) {
       return;
     }
@@ -292,10 +265,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       String message;
 
-      // ==========================================================
-      // FIREBASE GOOGLE LOGIN ERRORS
-      // ==========================================================
-
       switch (e.code) {
         case 'account-exists-with-different-credential':
           message =
@@ -330,22 +299,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Google Sign-In failed: ${e.description ?? e.code}'),
+          content: Text(
+            'Google Sign-In failed: '
+            '${e.description ?? e.code}',
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Google Sign-In was cancelled or failed.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
     } finally {
-      // ==========================================================
-      // STOP LOADING
-      // ==========================================================
-
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -368,15 +334,11 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 30),
-
           child: Form(
             key: _formKey,
-
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 // ========================================================
                 // HEADER
@@ -385,7 +347,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Text(
                   'Welcome Back!',
-
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 32,
@@ -398,7 +359,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Text(
                   'Sign in to continue your riding journey',
-
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 15,
@@ -412,7 +372,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ========================================================
                 Text(
                   'Email',
-
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 14,
@@ -424,17 +383,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextFormField(
                   controller: emailController,
-
                   keyboardType: TextInputType.emailAddress,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration: inputDecoration(
                     context,
                     hintText: 'Enter your email',
                     icon: Icons.email_outlined,
                   ),
-
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
@@ -455,7 +410,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ========================================================
                 Text(
                   'Password',
-
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 14,
@@ -467,11 +421,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextFormField(
                   controller: passwordController,
-
                   obscureText: obscurePassword,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration:
                       inputDecoration(
                         context,
@@ -484,17 +435,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               obscurePassword = !obscurePassword;
                             });
                           },
-
                           icon: Icon(
                             obscurePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
-
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
@@ -515,7 +463,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ========================================================
                 Align(
                   alignment: Alignment.centerRight,
-
                   child: TextButton(
                     onPressed: isLoading
                         ? null
@@ -528,14 +475,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                     ),
-
                     child: const Text(
                       'Forgot Password?',
-
                       style: TextStyle(
                         color: Colors.blue,
                         fontSize: 14,
@@ -553,31 +497,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-
                   child: ElevatedButton(
                     onPressed: isLoading ? null : login,
-
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
-
                       foregroundColor: Colors.white,
-
                       disabledBackgroundColor: Colors.blue.withValues(
                         alpha: 0.5,
                       ),
-
                       elevation: 0,
-
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-
                     child: isLoading
                         ? const SizedBox(
                             height: 24,
                             width: 24,
-
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
                               color: Colors.white,
@@ -585,7 +521,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text(
                             'Login',
-
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -602,20 +537,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   children: [
                     Expanded(child: Divider(color: colorScheme.outlineVariant)),
-
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
-
                       child: Text(
                         'or continue with',
-
                         style: TextStyle(
                           color: colorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
                     ),
-
                     Expanded(child: Divider(color: colorScheme.outlineVariant)),
                   ],
                 ),
@@ -633,7 +564,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         assetPath: 'assets/images/google.png',
                         title: 'Google',
                         iconSize: 22,
-
                         onPressed: signInWithGoogle,
                       ),
                     ),
@@ -646,7 +576,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         assetPath: 'assets/images/facebook.png',
                         title: 'Facebook',
                         iconSize: 22,
-
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -668,11 +597,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ========================================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-
                   children: [
                     Text(
                       "Don't have an account?",
-
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
                         fontSize: 14,
@@ -692,10 +619,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               );
                             },
-
                       child: const Text(
                         'Register',
-
                         style: TextStyle(
                           color: Colors.blue,
                           fontSize: 14,
@@ -728,21 +653,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return SizedBox(
       height: 52,
-
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
-
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: colorScheme.outlineVariant),
-
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-
           children: [
             Image.asset(assetPath, width: iconSize, height: iconSize),
 
@@ -750,7 +670,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
             Text(
               title,
-
               style: TextStyle(
                 color: colorScheme.onSurface,
                 fontSize: 14,
@@ -789,31 +708,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
 
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
 
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: const BorderSide(color: Colors.blue, width: 1.5),
       ),
 
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: const BorderSide(color: Colors.redAccent),
       ),
 
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
     );

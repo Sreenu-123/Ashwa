@@ -26,22 +26,30 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // ================= TEXT CONTROLLERS =================
+  // ============================================================
+  // TEXT CONTROLLERS
+  // ============================================================
 
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController ageController;
   late final TextEditingController horseController;
 
-  // ================= RIDING LEVEL =================
+  // ============================================================
+  // RIDING LEVEL
+  // ============================================================
 
   late String ridingLevel;
 
-  // ================= PROFILE IMAGE =================
+  // ============================================================
+  // PROFILE IMAGE
+  // ============================================================
 
   XFile? selectedImage;
 
-  // ================= INIT =================
+  // ============================================================
+  // INIT STATE
+  // ============================================================
 
   @override
   void initState() {
@@ -58,7 +66,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     ridingLevel = widget.ridingLevel;
   }
 
-  // ================= PICK IMAGE =================
+  // ============================================================
+  // PICK PROFILE IMAGE
+  // ============================================================
 
   Future<void> pickProfileImage() async {
     final ImagePicker picker = ImagePicker();
@@ -72,14 +82,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       selectedImage = image;
     });
   }
 
-  // ================= SAVE PROFILE =================
+  // ============================================================
+  // SAVE PROFILE
+  // ============================================================
 
   void saveProfile() {
     final updatedProfile = {
@@ -89,15 +103,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'horseName': horseController.text.trim(),
       'ridingLevel': ridingLevel,
       'profileImagePath': selectedImage?.path,
-
-      // Return newly selected image.
-      'profileImagePath': selectedImage?.path,
     };
 
     Navigator.pop(context, updatedProfile);
   }
 
-  // ================= DISPOSE =================
+  // ============================================================
+  // DISPOSE
+  // ============================================================
 
   @override
   void dispose() {
@@ -109,7 +122,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  // ================= BUILD =================
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +133,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-      // ================= APP BAR =================
+      // ==========================================================
+      // APP BAR
+      // ==========================================================
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
@@ -149,7 +166,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         centerTitle: false,
       ),
 
-      // ================= BODY =================
+      // ==========================================================
+      // BODY
+      // ==========================================================
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -160,7 +179,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              // ================= PROFILE PHOTO =================
+              // ========================================================
+              // PROFILE PHOTO
+              // ========================================================
               Center(
                 child: Stack(
                   children: [
@@ -177,15 +198,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ? ClipOval(
                               child: Image.file(
                                 File(selectedImage!.path),
+
                                 width: 105,
                                 height: 105,
+
                                 fit: BoxFit.cover,
                               ),
                             )
                           : _buildExistingImage(colorScheme),
                     ),
 
-                    // ================= CAMERA BUTTON =================
+                    // ==================================================
+                    // CAMERA BUTTON
+                    // ==================================================
                     Positioned(
                       right: 0,
                       bottom: 2,
@@ -199,6 +224,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                           decoration: BoxDecoration(
                             color: Colors.blue,
+
                             shape: BoxShape.circle,
 
                             border: Border.all(
@@ -221,7 +247,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // ================= CHANGE PHOTO =================
+              // ========================================================
+              // CHANGE PHOTO
+              // ========================================================
               Center(
                 child: GestureDetector(
                   onTap: pickProfileImage,
@@ -240,7 +268,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 30),
 
-              // ================= PERSONAL INFORMATION =================
+              // ========================================================
+              // PERSONAL INFORMATION
+              // ========================================================
               Text(
                 'Personal Information',
 
@@ -253,7 +283,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // ========================================================
               // NAME
+              // ========================================================
               profileField(
                 controller: nameController,
                 label: 'Name',
@@ -262,7 +294,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // ========================================================
               // EMAIL
+              // ========================================================
               profileField(
                 controller: emailController,
                 label: 'Email',
@@ -272,7 +306,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // ========================================================
               // AGE
+              // ========================================================
               profileField(
                 controller: ageController,
                 label: 'Age',
@@ -282,7 +318,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 28),
 
-              // ================= RIDING INFORMATION =================
+              // ========================================================
+              // RIDING INFORMATION
+              // ========================================================
               Text(
                 'Riding Information',
 
@@ -295,7 +333,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ================= RIDING LEVEL =================
+              // ========================================================
+              // RIDING LEVEL
+              // ========================================================
               Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainer,
@@ -312,6 +352,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   icon: Icon(
                     Icons.keyboard_arrow_down,
+
                     color: colorScheme.onSurfaceVariant,
                   ),
 
@@ -340,14 +381,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       value: 'Beginner',
                       child: Text('Beginner'),
                     ),
+
                     DropdownMenuItem(
                       value: 'Intermediate',
                       child: Text('Intermediate'),
                     ),
+
                     DropdownMenuItem(
                       value: 'Advanced',
                       child: Text('Advanced'),
                     ),
+
                     DropdownMenuItem(
                       value: 'Professional',
                       child: Text('Professional'),
@@ -366,7 +410,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
+              // ========================================================
               // HORSE NAME
+              // ========================================================
               profileField(
                 controller: horseController,
                 label: 'Horse Name',
@@ -375,7 +421,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 35),
 
-              // ================= SAVE =================
+              // ========================================================
+              // SAVE BUTTON
+              // ========================================================
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -405,7 +453,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // ================= CANCEL =================
+              // ========================================================
+              // CANCEL BUTTON
+              // ========================================================
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -432,7 +482,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // ================= EXISTING IMAGE =================
+  // ============================================================
+  // EXISTING PROFILE IMAGE
+  // ============================================================
 
   Widget _buildExistingImage(ColorScheme colorScheme) {
     final path = widget.currentProfileImagePath;
@@ -450,7 +502,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Icon(Icons.person, color: colorScheme.onSurface, size: 58);
   }
 
-  // ================= PROFILE FIELD =================
+  // ============================================================
+  // PROFILE FIELD
+  // ============================================================
 
   Widget profileField({
     required TextEditingController controller,
