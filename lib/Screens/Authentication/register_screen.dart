@@ -1,11 +1,9 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../services/api_services.dart';
 import '../Authentication/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -34,14 +32,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // ============================================================
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  // ============================================================
-  // FIREBASE
-  // ============================================================
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // ============================================================
   // IMAGE PICKER
@@ -145,25 +135,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   // ============================================================
-  // UPLOAD PROFILE PICTURE
-  // ============================================================
-
-  Future<String?> uploadProfileImage(String uid) async {
-    if (selectedProfileImage == null) {
-      return null;
-    }
-
-    final Reference storageReference = _storage
-        .ref()
-        .child('profile_images')
-        .child('$uid.jpg');
-
-    await storageReference.putFile(selectedProfileImage!);
-
-    return await storageReference.getDownloadURL();
-  }
-
-  // ============================================================
   // REGISTER
   // ============================================================
 
@@ -171,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     FocusScope.of(context).unfocus();
 
     // ------------------------------------------------------------
-    // VALIDATE FORM
+    // FORM VALIDATION
     // ------------------------------------------------------------
 
     if (!_formKey.currentState!.validate()) {
@@ -207,7 +178,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // ------------------------------------------------------------
-    // DROPDOWN VALIDATION
+    // RIDING DETAILS
     // ------------------------------------------------------------
 
     if (selectedRidingExperience == null ||
@@ -229,77 +200,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isLoading = true;
     });
 
-    UserCredential? userCredential;
-
     try {
       // ==========================================================
-      // CREATE FIREBASE AUTH ACCOUNT
+      // REGISTER THROUGH OUR FASTAPI BACKEND
       // ==========================================================
 
-      userCredential = await _auth.createUserWithEmailAndPassword(
+      final result = await ApiService.registerUser(
+        fullName: nameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text,
+        age: int.parse(ageController.text.trim()),
+        ridingExperience: selectedRidingExperience!,
+        ridingLevel: selectedRidingLevel!,
+        discipline: selectedRidingDiscipline!,
+        primaryGoal: selectedPrimaryGoal!,
       );
-
-      final User? user = userCredential.user;
-
-      if (user == null) {
-        throw Exception('Unable to create user account.');
-      }
-
-      // ==========================================================
-      // UPDATE FIREBASE DISPLAY NAME
-      // ==========================================================
-
-      await user.updateDisplayName(nameController.text.trim());
-
-      // ==========================================================
-      // UPLOAD PROFILE IMAGE
-      // ==========================================================
-
-      final String? profileImageUrl = await uploadProfileImage(user.uid);
-
-      // ==========================================================
-      // SAVE PROFILE DATA TO FIRESTORE
-      // ==========================================================
-
-      await _firestore.collection('users').doc(user.uid).set({
-        'uid': user.uid,
-        'fullName': nameController.text.trim(),
-        'email': emailController.text.trim(),
-        'age': int.parse(ageController.text.trim()),
-        'ridingExperience': selectedRidingExperience,
-        'ridingLevel': selectedRidingLevel,
-        'ridingDiscipline': selectedRidingDiscipline,
-        'primaryGoal': selectedPrimaryGoal,
-        'profileImageUrl': profileImageUrl,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // ==========================================================
-      // LOGOUT
-      //
-      // createUserWithEmailAndPassword automatically signs
-      // the user in.
-      //
-      // Our ASHWA flow:
-      //
-      // Register → Login → Main Navigation
-      //
-      // So sign out before going back to Login.
-      // ==========================================================
-
-      await _auth.signOut();
 
       if (!mounted) return;
 
       // ==========================================================
-      // SUCCESS MESSAGE
+      // SUCCESS
       // ==========================================================
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully! Please login.'),
+        SnackBar(
+          content: Text(
+            result['message']?.toString() ??
+                'Account created successfully! Please login.',
+          ),
         ),
       );
 
@@ -314,59 +242,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               LoginScreen(onThemeChanged: widget.onThemeChanged),
         ),
       );
-    } on FirebaseAuthException catch (e) {
-      // ----------------------------------------------------------
-      // IF FIREBASE AUTH ACCOUNT WAS CREATED BUT PROFILE SAVE
-      // FAILED, DELETE THE AUTH ACCOUNT TO AVOID HALF-REGISTERED
-      // USERS.
-      // ----------------------------------------------------------
-
-      if (e.code != 'email-already-in-use') {
-        // Nothing here intentionally.
-      }
-
+    } catch (e) {
       if (!mounted) return;
 
-      String message;
-
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'An account already exists with this email.';
-          break;
-
-        case 'invalid-email':
-          message = 'Please enter a valid email address.';
-          break;
-
-        case 'weak-password':
-          message = 'Password is too weak. Use a stronger password.';
-          break;
-
-        case 'operation-not-allowed':
-          message = 'Email/Password authentication is not enabled.';
-          break;
-
-        case 'network-request-failed':
-          message = 'Network error. Please check your internet connection.';
-          break;
-
-        case 'too-many-requests':
-          message = 'Too many attempts. Please try again later.';
-          break;
-
-        default:
-          message = e.message ?? 'Account creation failed.';
-      }
+      final String message = e.toString().replaceFirst('Exception: ', '');
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed. Please try again.')),
-      );
     } finally {
       if (mounted) {
         setState(() {
@@ -386,19 +269,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 30),
-
           child: Form(
             key: _formKey,
-
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 // ========================================================
                 // HEADER
@@ -434,13 +312,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Center(
                   child: GestureDetector(
                     onTap: isLoading ? null : pickProfileImage,
-
                     child: Stack(
                       children: [
                         Container(
                           width: 110,
                           height: 110,
-
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: colorScheme.surfaceContainer,
@@ -449,7 +325,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               width: 1.5,
                             ),
                           ),
-
                           child: ClipOval(
                             child: selectedProfileImage != null
                                 ? Image.file(
@@ -463,20 +338,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                           ),
                         ),
-
                         Positioned(
                           right: 0,
                           bottom: 2,
-
                           child: Container(
                             width: 34,
                             height: 34,
-
                             decoration: const BoxDecoration(
                               color: Colors.blue,
                               shape: BoxShape.circle,
                             ),
-
                             child: const Icon(
                               Icons.camera_alt_outlined,
                               color: Colors.white,
@@ -513,15 +384,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: nameController,
                   textCapitalization: TextCapitalization.words,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration: inputDecoration(
                     context,
                     hintText: 'Enter your full name',
                     icon: Icons.person_outline,
                   ),
-
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your name';
@@ -546,17 +414,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextFormField(
                   controller: emailController,
-
                   keyboardType: TextInputType.emailAddress,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration: inputDecoration(
                     context,
                     hintText: 'Enter your email',
                     icon: Icons.email_outlined,
                   ),
-
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
@@ -583,11 +447,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextFormField(
                   controller: passwordController,
-
                   obscureText: obscurePassword,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration:
                       inputDecoration(
                         context,
@@ -600,7 +461,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               obscurePassword = !obscurePassword;
                             });
                           },
-
                           icon: Icon(
                             obscurePassword
                                 ? Icons.visibility_off_outlined
@@ -609,7 +469,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ),
-
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a password';
@@ -634,11 +493,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextFormField(
                   controller: confirmPasswordController,
-
                   obscureText: obscureConfirmPassword,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration:
                       inputDecoration(
                         context,
@@ -651,7 +507,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               obscureConfirmPassword = !obscureConfirmPassword;
                             });
                           },
-
                           icon: Icon(
                             obscureConfirmPassword
                                 ? Icons.visibility_off_outlined
@@ -660,7 +515,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ),
-
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please confirm your password';
@@ -685,17 +539,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextFormField(
                   controller: ageController,
-
                   keyboardType: TextInputType.number,
-
                   style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
                   decoration: inputDecoration(
                     context,
                     hintText: 'Enter your age',
                     icon: Icons.cake_outlined,
                   ),
-
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your age';
@@ -810,14 +660,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // ========================================================
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Checkbox(
                       value: isChecked,
-
                       activeColor: Colors.blue,
                       checkColor: Colors.white,
-
                       onChanged: isLoading
                           ? null
                           : (value) {
@@ -826,14 +673,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               });
                             },
                     ),
-
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 12),
-
                         child: Text(
                           'I agree to the Terms & Conditions and Privacy Policy',
-
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 13,
@@ -853,31 +697,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-
                   child: ElevatedButton(
                     onPressed: isLoading ? null : register,
-
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
-
                       foregroundColor: Colors.white,
-
                       disabledBackgroundColor: Colors.blue.withValues(
                         alpha: 0.5,
                       ),
-
                       elevation: 0,
-
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-
                     child: isLoading
                         ? const SizedBox(
                             height: 24,
                             width: 24,
-
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
                               color: Colors.white,
@@ -885,7 +721,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           )
                         : const Text(
                             'Create Account',
-
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -902,20 +737,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   children: [
                     Expanded(child: Divider(color: colorScheme.outlineVariant)),
-
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
-
                       child: Text(
                         'or',
-
                         style: TextStyle(
                           color: colorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
                     ),
-
                     Expanded(child: Divider(color: colorScheme.outlineVariant)),
                   ],
                 ),
@@ -927,17 +758,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // ========================================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-
                   children: [
                     Text(
                       'Already have an account?',
-
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
                         fontSize: 14,
                       ),
                     ),
-
                     TextButton(
                       onPressed: isLoading
                           ? null
@@ -951,10 +779,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               );
                             },
-
                       child: const Text(
                         'Login',
-
                         style: TextStyle(
                           color: Colors.blue,
                           fontSize: 14,
@@ -988,24 +814,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return DropdownButtonFormField<String>(
       initialValue: value,
-
       isExpanded: true,
-
       icon: Icon(
         Icons.keyboard_arrow_down_rounded,
         color: colorScheme.onSurfaceVariant,
       ),
-
       style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
-
       decoration: inputDecoration(context, hintText: hintText, icon: icon),
-
       dropdownColor: colorScheme.surface,
-
       items: items.map((item) {
         return DropdownMenuItem<String>(value: item, child: Text(item));
       }).toList(),
-
       onChanged: onChanged,
     );
   }
@@ -1019,7 +838,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Text(
       label,
-
       style: TextStyle(
         color: colorScheme.onSurface,
         fontSize: 14,
@@ -1041,44 +859,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return InputDecoration(
       hintText: hintText,
-
       hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-
       prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant),
-
       filled: true,
-
       fillColor: colorScheme.surfaceContainer,
-
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
-
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: const BorderSide(color: Colors.blue, width: 1.5),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: const BorderSide(color: Colors.redAccent),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
     );

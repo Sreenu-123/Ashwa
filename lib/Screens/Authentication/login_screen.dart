@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../services/api_services.dart';
 import '../Home/main_navigation_screen.dart';
 import './forget_password_screen.dart';
 import './register_screen.dart';
@@ -30,41 +29,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // ============================================================
-  // FIREBASE AUTH
-  // ============================================================
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // ============================================================
-  // GOOGLE SIGN-IN
-  // ============================================================
-
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-
-  late final Future<void> _googleSignInInitialization;
-
-  // ============================================================
   // VARIABLES
   // ============================================================
 
   bool obscurePassword = true;
   bool isLoading = false;
-
-  // ============================================================
-  // INIT STATE
-  // ============================================================
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Initialize Google Sign-In exactly once.
-    //
-    // This is the WEB OAuth client ID from google-services.json.
-    _googleSignInInitialization = _googleSignIn.initialize(
-      
-    );
-  }
 
   // ============================================================
   // DISPOSE
@@ -79,31 +48,53 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // ============================================================
-  // EMAIL / PASSWORD LOGIN
+  // LOGIN
   // ============================================================
 
   Future<void> login() async {
     FocusScope.of(context).unfocus();
 
+    // ------------------------------------------------------------
+    // VALIDATE FORM
+    // ------------------------------------------------------------
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    // ------------------------------------------------------------
+    // START LOADING
+    // ------------------------------------------------------------
 
     setState(() {
       isLoading = true;
     });
 
     try {
-      await _auth.signInWithEmailAndPassword(
+      // ==========================================================
+      // LOGIN THROUGH FASTAPI BACKEND
+      // ==========================================================
+
+      final result = await ApiService.loginUser(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Login successful!')));
+      // ==========================================================
+      // SUCCESS
+      // ==========================================================
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']?.toString() ?? 'Login successful!'),
+        ),
+      );
+
+      // ==========================================================
+      // GO TO MAIN NAVIGATION
+      // ==========================================================
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -113,56 +104,14 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         (route) => false,
       );
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       if (!mounted) return;
 
-      String message;
-
-      switch (e.code) {
-        case 'invalid-email':
-          message = 'Please enter a valid email address.';
-          break;
-
-        case 'user-not-found':
-          message = 'No account found with this email.';
-          break;
-
-        case 'wrong-password':
-        case 'invalid-credential':
-          message = 'Incorrect email or password.';
-          break;
-
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-
-        case 'too-many-requests':
-          message = 'Too many login attempts. Please try again later.';
-          break;
-
-        case 'network-request-failed':
-          message = 'Network error. Please check your internet connection.';
-          break;
-
-        case 'operation-not-allowed':
-          message = 'Email/Password authentication is not enabled.';
-          break;
-
-        default:
-          message = e.message ?? 'Login failed. Please try again.';
-      }
+      final String message = e.toString().replaceFirst('Exception: ', '');
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Something went wrong. Please try again.'),
-        ),
-      );
     } finally {
       if (mounted) {
         setState(() {
@@ -173,151 +122,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // ============================================================
-  // GOOGLE SIGN-IN
+  // GOOGLE LOGIN
   // ============================================================
 
-  Future<void> signInWithGoogle() async {
-    FocusScope.of(context).unfocus();
+  void googleLogin() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Google Login will be connected next.')),
+    );
+  }
 
-    if (isLoading) {
-      return;
-    }
+  // ============================================================
+  // FACEBOOK LOGIN
+  // ============================================================
 
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // ==========================================================
-      // WAIT FOR GOOGLE SIGN-IN INITIALIZATION
-      // ==========================================================
-
-      await _googleSignInInitialization;
-
-      // ==========================================================
-      // CHECK PLATFORM SUPPORT
-      // ==========================================================
-
-      if (!_googleSignIn.supportsAuthenticate()) {
-        throw Exception('Google Sign-In is not supported on this platform.');
-      }
-
-      // ==========================================================
-      // GOOGLE ACCOUNT SIGN-IN
-      // ==========================================================
-
-      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-
-      // ==========================================================
-      // GET GOOGLE AUTHENTICATION
-      // ==========================================================
-
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-
-      // ==========================================================
-      // CHECK ID TOKEN
-      // ==========================================================
-
-      final String? idToken = googleAuth.idToken;
-
-      if (idToken == null) {
-        throw Exception('Google Sign-In failed: ID token is missing.');
-      }
-
-      // ==========================================================
-      // CREATE FIREBASE CREDENTIAL
-      // ==========================================================
-
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        idToken: idToken,
-      );
-
-      // ==========================================================
-      // SIGN IN TO FIREBASE
-      // ==========================================================
-
-      await _auth.signInWithCredential(credential);
-
-      if (!mounted) return;
-
-      // ==========================================================
-      // SUCCESS
-      // ==========================================================
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google Sign-In successful!')),
-      );
-
-      // ==========================================================
-      // GO TO HOME
-      // ==========================================================
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              NavigationScreen(onThemeChanged: widget.onThemeChanged),
-        ),
-        (route) => false,
-      );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-
-      String message;
-
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          message =
-              'An account already exists with a different sign-in method.';
-          break;
-
-        case 'invalid-credential':
-          message = 'Google credential is invalid. Please try again.';
-          break;
-
-        case 'operation-not-allowed':
-          message = 'Google Sign-In is not enabled in Firebase.';
-          break;
-
-        case 'network-request-failed':
-          message = 'Network error. Please check your internet connection.';
-          break;
-
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-
-        default:
-          message = e.message ?? 'Google Sign-In failed. Please try again.';
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-    } on GoogleSignInException catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Google Sign-In failed: '
-            '${e.description ?? e.code}',
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Google Sign-In failed: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
+  void facebookLogin() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Facebook Login will be connected next.')),
+    );
   }
 
   // ============================================================
@@ -330,7 +151,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -343,6 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ========================================================
                 // HEADER
                 // ========================================================
+
                 const SizedBox(height: 20),
 
                 Text(
@@ -395,7 +216,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       return 'Please enter your email';
                     }
 
-                    if (!value.contains('@')) {
+                    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+                    if (!emailRegex.hasMatch(value.trim())) {
                       return 'Please enter a valid email';
                     }
 
@@ -564,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         assetPath: 'assets/images/google.png',
                         title: 'Google',
                         iconSize: 22,
-                        onPressed: signInWithGoogle,
+                        onPressed: googleLogin,
                       ),
                     ),
 
@@ -576,15 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         assetPath: 'assets/images/facebook.png',
                         title: 'Facebook',
                         iconSize: 22,
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Facebook Login will be connected next.',
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: facebookLogin,
                       ),
                     ),
                   ],
@@ -695,37 +510,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return InputDecoration(
       hintText: hintText,
-
       hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-
       prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant),
-
       filled: true,
-
       fillColor: colorScheme.surfaceContainer,
-
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
-
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Colors.blue, width: 1.5),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Colors.redAccent),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
