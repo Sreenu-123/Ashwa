@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../services/api_services.dart';
+
 import '../Profile/settings_screen.dart';
 import '../Profile/edit_profile_screen.dart';
 import '../Profile/achievement_screen.dart';
@@ -19,6 +21,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // ============================================================
+  // PROFILE DATA
+  // ============================================================
+
   String name = 'Rider';
   String email = 'rider@example.com';
   String age = '20';
@@ -27,9 +33,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String? profileImagePath;
 
+  bool isLoading = true;
+
+  // ============================================================
+  // INIT
+  // ============================================================
+
   @override
   void initState() {
     super.initState();
+
     loadProfileData();
   }
 
@@ -38,6 +51,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ============================================================
 
   Future<void> loadProfileData() async {
+    // First load local data.
+    // This keeps horse name and profile image available.
+    await loadLocalProfileData();
+
+    // Then try loading authenticated user from backend.
+    await loadBackendProfileData();
+
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  // ============================================================
+  // LOAD LOCAL PROFILE DATA
+  // ============================================================
+
+  Future<void> loadLocalProfileData() async {
     final prefs = await SharedPreferences.getInstance();
 
     final savedName = prefs.getString('profile_name');
@@ -64,29 +96,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
 
     setState(() {
-      name = savedName ?? 'Rider';
-      email = savedEmail ?? 'rider@example.com';
-      age = savedAge ?? '20';
-      horseName = savedHorseName ?? '';
-      ridingLevel = savedRidingLevel ?? 'Beginner';
+      // Local data is only used as fallback.
+      if (savedName != null && savedName.isNotEmpty) {
+        name = savedName;
+      }
+
+      if (savedEmail != null && savedEmail.isNotEmpty) {
+        email = savedEmail;
+      }
+
+      if (savedAge != null && savedAge.isNotEmpty) {
+        age = savedAge;
+      }
+
+      if (savedHorseName != null) {
+        horseName = savedHorseName;
+      }
+
+      if (savedRidingLevel != null && savedRidingLevel.isNotEmpty) {
+        ridingLevel = savedRidingLevel;
+      }
 
       profileImagePath = imagePath;
     });
 
-    debugPrint('Loaded profile image: $imagePath');
+    debugPrint('Loaded local profile image: $imagePath');
   }
 
   // ============================================================
-  // SAVE PROFILE DATA
+  // LOAD BACKEND PROFILE DATA
+  // ============================================================
+
+  Future<void> loadBackendProfileData() async {
+    try {
+      final currentUser = await ApiService.getCurrentUser();
+
+      if (!mounted) return;
+
+      setState(() {
+        // Backend is now the source of truth
+        // for authenticated user information.
+
+        name = currentUser['full_name']?.toString() ?? name;
+
+        email = currentUser['email']?.toString() ?? email;
+
+        final backendAge = currentUser['age'];
+
+        if (backendAge != null) {
+          age = backendAge.toString();
+        }
+
+        ridingLevel = currentUser['riding_level']?.toString() ?? ridingLevel;
+      });
+
+      // Keep backend data locally as a fallback
+      // for the profile screen.
+      await saveProfileData();
+
+      debugPrint('Backend profile loaded successfully.');
+    } catch (e) {
+      // Backend failure should NOT break the profile UI.
+      // Existing local data will remain visible.
+
+      debugPrint('Failed to load backend profile: $e');
+    }
+  }
+
+  // ============================================================
+  // SAVE PROFILE DATA LOCALLY
   // ============================================================
 
   Future<void> saveProfileData() async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString('profile_name', name);
+
     await prefs.setString('profile_email', email);
+
     await prefs.setString('profile_age', age);
+
     await prefs.setString('profile_horse_name', horseName);
+
     await prefs.setString('profile_riding_level', ridingLevel);
   }
 
@@ -100,6 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (!await sourceFile.exists()) {
         debugPrint('Source image does not exist.');
+
         return null;
       }
 
@@ -120,7 +212,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       await prefs.setString('profile_image_name', fileName);
 
-      debugPrint('Profile image permanently saved: ${permanentFile.path}');
+      debugPrint(
+        'Profile image permanently saved: '
+        '${permanentFile.path}',
+      );
 
       return permanentFile.path;
     } catch (e) {
@@ -202,6 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+
           padding: const EdgeInsets.all(20),
 
           child: Column(
@@ -209,6 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               // PROFILE IMAGE
               // ==================================================
+
               CircleAvatar(
                 radius: 48,
 
@@ -258,6 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               Container(
                 width: double.infinity,
+
                 padding: const EdgeInsets.symmetric(vertical: 20),
 
                 decoration: BoxDecoration(
@@ -270,8 +368,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   children: [
                     profileStat(context, '12', 'Rides'),
+
                     profileStat(context, '8', 'Lessons'),
+
                     profileStat(context, '85%', 'Best Score'),
+
                     profileStat(context, '7 Days', 'Streaks'),
                   ],
                 ),
@@ -427,6 +528,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.15),
+
                 borderRadius: BorderRadius.circular(14),
               ),
 

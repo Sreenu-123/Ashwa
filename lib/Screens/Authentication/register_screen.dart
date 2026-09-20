@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // ============================================================
 
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController horseNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -99,6 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     nameController.dispose();
+    horseNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -207,6 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final result = await ApiService.registerUser(
         fullName: nameController.text.trim(),
+        horseName: horseNameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text,
         age: int.parse(ageController.text.trim()),
@@ -397,6 +400,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     if (value.trim().length < 2) {
                       return 'Please enter a valid name';
+                    }
+
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // ========================================================
+                // HORSE NAME
+                // ========================================================
+                fieldLabel(context, 'Horse Name'),
+
+                const SizedBox(height: 8),
+
+                TextFormField(
+                  controller: horseNameController,
+                  textCapitalization: TextCapitalization.words,
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
+                  decoration: inputDecoration(
+                    context,
+                    hintText: 'Enter your horse name',
+                    icon: Icons.pets_outlined,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your horse name';
+                    }
+
+                    if (value.trim().length < 2) {
+                      return 'Please enter a valid horse name';
                     }
 
                     return null;

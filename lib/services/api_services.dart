@@ -31,6 +31,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> registerUser({
     required String fullName,
+    required String horseName,
     required String email,
     required String password,
     required int age,
@@ -48,6 +49,7 @@ class ApiService {
         },
         body: jsonEncode({
           'full_name': fullName.trim(),
+          'horse_name': horseName.trim(),
           'email': email.trim(),
           'password': password,
           'age': age,
