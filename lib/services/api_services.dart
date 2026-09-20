@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiService {
   // ============================================================
@@ -17,6 +18,12 @@ class ApiService {
   // Use your Mac's local IP address.
   // Example:
   // static const String baseUrl = 'http://192.168.1.10:8000';
+
+  // ============================================================
+  // SECURE STORAGE
+  // ============================================================
+
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   // ============================================================
   // REGISTER USER
@@ -104,6 +111,19 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
+        // ======================================================
+        // SAVE ACCESS TOKEN SECURELY
+        // ======================================================
+
+        final accessToken = data['access_token'];
+
+        if (accessToken != null) {
+          await _storage.write(
+            key: 'access_token',
+            value: accessToken.toString(),
+          );
+        }
+
         return Map<String, dynamic>.from(data);
       }
 
@@ -123,6 +143,22 @@ class ApiService {
     } catch (e) {
       throw Exception('Login failed: $e');
     }
+  }
+
+  // ============================================================
+  // GET STORED ACCESS TOKEN
+  // ============================================================
+
+  static Future<String?> getAccessToken() async {
+    return await _storage.read(key: 'access_token');
+  }
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+
+  static Future<void> logout() async {
+    await _storage.delete(key: 'access_token');
   }
 
   // ============================================================
