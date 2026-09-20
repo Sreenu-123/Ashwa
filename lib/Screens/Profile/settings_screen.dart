@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../services/api_services.dart';
+import '../Authentication/login_screen.dart';
+
 class SettingsScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
 
@@ -111,6 +114,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setString('settings_coaching_level', value);
   }
 
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+
+  Future<void> logout() async {
+    try {
+      // Delete JWT token from secure storage
+      await ApiService.logout();
+
+      if (!mounted) return;
+
+      // Remove all previous screens and go to Login
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              LoginScreen(onThemeChanged: widget.onThemeChanged),
+        ),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Logout failed: $e')));
+    }
+  }
+
   // ================= BUILD =================
 
   @override
@@ -127,6 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ================= HEADER =================
+
               Row(
                 children: [
                   IconButton(
@@ -586,7 +619,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: options.map((option) {
                 return RadioListTile<String>(
                   value: option,
-
                   title: Text(
                     option,
                     style: TextStyle(color: colorScheme.onSurface),
@@ -627,8 +659,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                // Close confirmation dialog first
                 Navigator.pop(dialogContext);
+
+                // Perform logout
+                await logout();
               },
               child: const Text(
                 'Logout',

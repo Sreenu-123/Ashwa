@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // LOGIN THROUGH FASTAPI BACKEND
       // ==========================================================
 
-      final result = await ApiService.loginUser(
+      await ApiService.loginUser(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
