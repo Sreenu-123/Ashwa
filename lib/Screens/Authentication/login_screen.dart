@@ -80,15 +80,21 @@ class _LoginScreenState extends State<LoginScreen> {
         password: passwordController.text,
       );
 
+      // ==========================================================
+      // GET CURRENT USER USING JWT
+      // ==========================================================
+
+      final currentUser = await ApiService.getCurrentUser();
+
       if (!mounted) return;
 
       // ==========================================================
-      // SUCCESS
+      // SUCCESS MESSAGE
       // ==========================================================
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message']?.toString() ?? 'Login successful!'),
+          content: Text('Welcome ${currentUser['full_name'] ?? 'back'}!'),
         ),
       );
 
@@ -420,7 +426,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 14,
                       ),
                     ),
-
                     TextButton(
                       onPressed: isLoading
                           ? null

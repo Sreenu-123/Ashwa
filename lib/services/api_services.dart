@@ -154,6 +154,63 @@ class ApiService {
   }
 
   // ============================================================
+  // GET CURRENT USER
+  // ============================================================
+
+  static Future<Map<String, dynamic>> getCurrentUser() async {
+    try {
+      // ========================================================
+      // GET STORED JWT TOKEN
+      // ========================================================
+
+      final token = await getAccessToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No access token found');
+      }
+
+      // ========================================================
+      // CALL /ME ENDPOINT
+      // ========================================================
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/me'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        return Map<String, dynamic>.from(data);
+      }
+
+      // ========================================================
+      // BACKEND ERROR
+      // ========================================================
+
+      final errorData = _decodeResponse(response.body);
+
+      if (errorData != null && errorData['detail'] != null) {
+        throw Exception(errorData['detail'].toString());
+      }
+
+      throw Exception(
+        'Failed to get current user '
+        '(${response.statusCode}): ${response.body}',
+      );
+    } catch (e) {
+      throw Exception('Failed to get current user: $e');
+    }
+  }
+
+  // ============================================================
   // LOGOUT
   // ============================================================
 
