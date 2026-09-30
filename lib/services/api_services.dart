@@ -1,20 +1,20 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
 class ApiService {
   // ============================================================
   // BACKEND URL
   // ============================================================
 
-  // iOS Simulator / Mac:
+  // iOS Simulator / Mac
   static const String baseUrl = 'http://127.0.0.1:8000';
 
-  // Android Emulator:
+  // Android Emulator
   // static const String baseUrl = 'http://10.0.2.2:8000';
 
-  // Physical Android/iPhone:
+  // Physical Android / iPhone
   // Use your Mac's local IP address.
   // Example:
   // static const String baseUrl = 'http://192.168.1.10:8000';
@@ -81,7 +81,8 @@ class ApiService {
       }
 
       throw Exception(
-        'Registration failed (${response.statusCode}): ${response.body}',
+        'Registration failed '
+        '(${response.statusCode})',
       );
     } catch (e) {
       throw Exception('Registration failed: $e');
@@ -114,7 +115,7 @@ class ApiService {
         final data = jsonDecode(response.body);
 
         // ======================================================
-        // SAVE ACCESS TOKEN SECURELY
+        // SAVE JWT TOKEN
         // ======================================================
 
         final accessToken = data['access_token'];
@@ -140,7 +141,8 @@ class ApiService {
       }
 
       throw Exception(
-        'Login failed (${response.statusCode}): ${response.body}',
+        'Login failed '
+        '(${response.statusCode})',
       );
     } catch (e) {
       throw Exception('Login failed: $e');
@@ -162,7 +164,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getCurrentUser() async {
     try {
       // ========================================================
-      // GET STORED JWT TOKEN
+      // GET JWT TOKEN
       // ========================================================
 
       final token = await getAccessToken();
@@ -172,7 +174,7 @@ class ApiService {
       }
 
       // ========================================================
-      // CALL /ME ENDPOINT
+      // CALL /ME
       // ========================================================
 
       final response = await http.get(
@@ -205,10 +207,87 @@ class ApiService {
 
       throw Exception(
         'Failed to get current user '
-        '(${response.statusCode}): ${response.body}',
+        '(${response.statusCode})',
       );
     } catch (e) {
       throw Exception('Failed to get current user: $e');
+    }
+  }
+
+  // ============================================================
+  // UPDATE CURRENT USER
+  // ============================================================
+
+  static Future<Map<String, dynamic>> updateCurrentUser({
+    required String fullName,
+    required String email,
+    required int age,
+    required String ridingExperience,
+    required String ridingLevel,
+    required String discipline,
+    required String primaryGoal,
+    required String horseName,
+  }) async {
+    try {
+      // ========================================================
+      // GET STORED JWT TOKEN
+      // ========================================================
+
+      final token = await getAccessToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No access token found');
+      }
+
+      // ========================================================
+      // CALL PUT /ME
+      // ========================================================
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'full_name': fullName.trim(),
+          'email': email.trim(),
+          'age': age,
+          'riding_experience': ridingExperience,
+          'riding_level': ridingLevel,
+          'discipline': discipline,
+          'primary_goal': primaryGoal,
+          'horse_name': horseName.trim(),
+        }),
+      );
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        return Map<String, dynamic>.from(data);
+      }
+
+      // ========================================================
+      // BACKEND ERROR
+      // ========================================================
+
+      final errorData = _decodeResponse(response.body);
+
+      if (errorData != null && errorData['detail'] != null) {
+        throw Exception(errorData['detail'].toString());
+      }
+
+      throw Exception(
+        'Profile update failed '
+        '(${response.statusCode})',
+      );
+    } catch (e) {
+      throw Exception('Profile update failed: $e');
     }
   }
 

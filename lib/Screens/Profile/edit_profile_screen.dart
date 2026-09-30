@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../services/api_services.dart';
+
 class EditProfileScreen extends StatefulWidget {
   final String name;
   final String email;
@@ -46,6 +48,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // ============================================================
 
   XFile? selectedImage;
+
+  // ============================================================
+  // SAVE STATE
+  // ============================================================
+
+  bool isSaving = false;
 
   // ============================================================
   // INIT STATE
@@ -95,17 +103,154 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // SAVE PROFILE
   // ============================================================
 
-  void saveProfile() {
-    final updatedProfile = {
-      'name': nameController.text.trim(),
-      'email': emailController.text.trim(),
-      'age': ageController.text.trim(),
-      'horseName': horseController.text.trim(),
-      'ridingLevel': ridingLevel,
-      'profileImagePath': selectedImage?.path,
-    };
+  Future<void> saveProfile() async {
+    // ==========================================================
+    // PREVENT MULTIPLE SAVE CLICKS
+    // ==========================================================
 
-    Navigator.pop(context, updatedProfile);
+    if (isSaving) {
+      return;
+    }
+
+    // ==========================================================
+    // GET VALUES
+    // ==========================================================
+
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final ageText = ageController.text.trim();
+    final horseName = horseController.text.trim();
+
+    // ==========================================================
+    // VALIDATION
+    // ==========================================================
+
+    if (name.isEmpty) {
+      _showMessage('Please enter your name.');
+      return;
+    }
+
+    if (email.isEmpty) {
+      _showMessage('Please enter your email.');
+      return;
+    }
+
+    if (ageText.isEmpty) {
+      _showMessage('Please enter your age.');
+      return;
+    }
+
+    final age = int.tryParse(ageText);
+
+    if (age == null || age <= 0) {
+      _showMessage('Please enter a valid age.');
+      return;
+    }
+
+    if (horseName.isEmpty) {
+      _showMessage('Please enter your horse name.');
+      return;
+    }
+
+    // ==========================================================
+    // START SAVING
+    // ==========================================================
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      // ========================================================
+      // GET CURRENT BACKEND USER
+      // ========================================================
+      //
+      // We need the existing:
+      // - riding_experience
+      // - discipline
+      // - primary_goal
+      //
+      // because this screen doesn't edit those fields.
+      // ========================================================
+
+      final currentUser = await ApiService.getCurrentUser();
+
+      // ========================================================
+      // UPDATE USER IN BACKEND
+      // ========================================================
+
+      final result = await ApiService.updateCurrentUser(
+        fullName: name,
+        email: email,
+        age: age,
+        ridingExperience: currentUser['riding_experience']?.toString() ?? '',
+        ridingLevel: ridingLevel,
+        discipline: currentUser['discipline']?.toString() ?? '',
+        primaryGoal: currentUser['primary_goal']?.toString() ?? '',
+        horseName: horseName,
+      );
+
+      // ========================================================
+      // CHECK WIDGET
+      // ========================================================
+
+      if (!mounted) {
+        return;
+      }
+
+      // ========================================================
+      // SUCCESS MESSAGE
+      // ========================================================
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully!')),
+      );
+
+      // ========================================================
+      // RETURN UPDATED PROFILE TO PROFILE SCREEN
+      // ========================================================
+
+      final updatedProfile = {
+        'name': result['user']?['full_name'] ?? name,
+        'email': result['user']?['email'] ?? email,
+        'age': (result['user']?['age'] ?? age).toString(),
+        'horseName': result['user']?['horse_name'] ?? horseName,
+        'ridingLevel': result['user']?['riding_level'] ?? ridingLevel,
+        'profileImagePath': selectedImage?.path,
+      };
+
+      Navigator.pop(context, updatedProfile);
+    } catch (e) {
+      // ========================================================
+      // ERROR
+      // ========================================================
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
+  }
+
+  // ============================================================
+  // SHOW MESSAGE
+  // ============================================================
+
+  void _showMessage(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   // ============================================================
@@ -142,10 +287,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
 
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-
+          onPressed: isSaving
+              ? null
+              : () {
+                  Navigator.pop(context);
+                },
           icon: Icon(
             Icons.arrow_back_ios_new,
             color: colorScheme.onSurface,
@@ -155,7 +301,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         title: Text(
           'Edit Profile',
-
           style: TextStyle(
             color: colorScheme.onSurface,
             fontSize: 20,
@@ -172,67 +317,57 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              // ========================================================
+              // ==================================================
               // PROFILE PHOTO
-              // ========================================================
+              // ==================================================
+
               Center(
                 child: Stack(
                   children: [
                     Container(
                       width: 105,
                       height: 105,
-
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainer,
                         shape: BoxShape.circle,
                       ),
-
                       child: selectedImage != null
                           ? ClipOval(
                               child: Image.file(
                                 File(selectedImage!.path),
-
                                 width: 105,
                                 height: 105,
-
                                 fit: BoxFit.cover,
                               ),
                             )
                           : _buildExistingImage(colorScheme),
                     ),
 
-                    // ==================================================
+                    // ==========================================
                     // CAMERA BUTTON
-                    // ==================================================
+                    // ==========================================
                     Positioned(
                       right: 0,
                       bottom: 2,
-
                       child: GestureDetector(
-                        onTap: pickProfileImage,
-
+                        onTap: isSaving ? null : pickProfileImage,
                         child: Container(
                           width: 34,
                           height: 34,
-
                           decoration: BoxDecoration(
                             color: Colors.blue,
-
                             shape: BoxShape.circle,
-
                             border: Border.all(
                               color: colorScheme.surface,
                               width: 3,
                             ),
                           ),
-
                           child: const Icon(
                             Icons.camera_alt_outlined,
                             color: Colors.white,
@@ -247,16 +382,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 12),
 
-              // ========================================================
+              // ==================================================
               // CHANGE PHOTO
-              // ========================================================
+              // ==================================================
               Center(
                 child: GestureDetector(
-                  onTap: pickProfileImage,
-
+                  onTap: isSaving ? null : pickProfileImage,
                   child: const Text(
                     'Change Profile Photo',
-
                     style: TextStyle(
                       color: Colors.blue,
                       fontSize: 14,
@@ -268,12 +401,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 30),
 
-              // ========================================================
+              // ==================================================
               // PERSONAL INFORMATION
-              // ========================================================
+              // ==================================================
               Text(
                 'Personal Information',
-
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 18,
@@ -283,9 +415,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ========================================================
+              // ==================================================
               // NAME
-              // ========================================================
+              // ==================================================
               profileField(
                 controller: nameController,
                 label: 'Name',
@@ -294,9 +426,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ========================================================
+              // ==================================================
               // EMAIL
-              // ========================================================
+              // ==================================================
               profileField(
                 controller: emailController,
                 label: 'Email',
@@ -306,9 +438,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ========================================================
+              // ==================================================
               // AGE
-              // ========================================================
+              // ==================================================
               profileField(
                 controller: ageController,
                 label: 'Age',
@@ -318,12 +450,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 28),
 
-              // ========================================================
+              // ==================================================
               // RIDING INFORMATION
-              // ========================================================
+              // ==================================================
               Text(
                 'Riding Information',
-
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 18,
@@ -333,15 +464,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 15),
 
-              // ========================================================
+              // ==================================================
               // RIDING LEVEL
-              // ========================================================
+              // ==================================================
               Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainer,
-
                   borderRadius: BorderRadius.circular(14),
-
                   border: Border.all(color: colorScheme.outlineVariant),
                 ),
 
@@ -352,7 +481,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   icon: Icon(
                     Icons.keyboard_arrow_down,
-
                     color: colorScheme.onSurfaceVariant,
                   ),
 
@@ -381,38 +509,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       value: 'Beginner',
                       child: Text('Beginner'),
                     ),
-
                     DropdownMenuItem(
                       value: 'Intermediate',
                       child: Text('Intermediate'),
                     ),
-
                     DropdownMenuItem(
                       value: 'Advanced',
                       child: Text('Advanced'),
                     ),
-
                     DropdownMenuItem(
                       value: 'Professional',
                       child: Text('Professional'),
                     ),
                   ],
 
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        ridingLevel = value;
-                      });
-                    }
-                  },
+                  onChanged: isSaving
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() {
+                              ridingLevel = value;
+                            });
+                          }
+                        },
                 ),
               ),
 
               const SizedBox(height: 15),
 
-              // ========================================================
+              // ==================================================
               // HORSE NAME
-              // ========================================================
+              // ==================================================
               profileField(
                 controller: horseController,
                 label: 'Horse Name',
@@ -421,53 +548,63 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 35),
 
-              // ========================================================
+              // ==================================================
               // SAVE BUTTON
-              // ========================================================
+              // ==================================================
               SizedBox(
                 width: double.infinity,
                 height: 55,
 
                 child: ElevatedButton(
-                  onPressed: saveProfile,
+                  onPressed: isSaving ? null : saveProfile,
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-
                     foregroundColor: Colors.white,
-
+                    disabledBackgroundColor: Colors.blue.withValues(alpha: 0.5),
                     elevation: 0,
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
 
-                  child: const Text(
-                    'Save Changes',
-
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // ========================================================
+              // ==================================================
               // CANCEL BUTTON
-              // ========================================================
+              // ==================================================
               SizedBox(
                 width: double.infinity,
                 height: 50,
 
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: isSaving
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                        },
 
                   child: Text(
                     'Cancel',
-
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 15,
@@ -519,6 +656,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       keyboardType: keyboardType,
 
+      enabled: !isSaving,
+
       style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
 
       cursorColor: Colors.blue,
@@ -536,13 +675,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-
           borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-
           borderSide: const BorderSide(color: Colors.blue, width: 1.5),
         ),
       ),
