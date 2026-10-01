@@ -10,6 +10,7 @@ import '../Profile/settings_screen.dart';
 import '../Profile/edit_profile_screen.dart';
 import '../Profile/achievement_screen.dart';
 import '../Profile/about_ashwa_screen.dart';
+import '../Profile/horse_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
@@ -82,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     //
     // Horse name belongs to the authenticated backend user.
     // Loading it from SharedPreferences can cause the previous
-    // user's horse name (example: Tiger) to appear for another user.
+    // user's horse name to appear for another user.
 
     // We store ONLY the filename in SharedPreferences.
     final savedImageName = prefs.getString('profile_image_name');
@@ -148,17 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         age = backendAge?.toString() ?? '';
 
-        // IMPORTANT FIX
-        //
-        // Do NOT use:
-        //
-        // ?? horseName
-        //
-        // because that would keep the previous user's local
-        // horse name.
-        //
-        // If backend has NULL, this becomes an empty string.
-
+        // Backend horse name is the source of truth.
         final backendHorseName = currentUser['horse_name'];
 
         horseName = backendHorseName?.toString() ?? '';
@@ -167,9 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
 
       // Save the current authenticated user's data locally.
-      //
-      // This also clears the old horse name because horseName
-      // has already been updated from backend.
       await saveProfileData();
 
       debugPrint('Backend profile loaded successfully.');
@@ -303,6 +291,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ============================================================
+  // OPEN HORSE SCREEN
+  // ============================================================
+
+  Future<void> openHorseScreen() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HorseScreen(horseName: horseName),
+      ),
+    );
+  }
+
+  // ============================================================
   // BUILD
   // ============================================================
 
@@ -395,6 +396,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Edit Profile',
                 subtitle: 'Update your rider information',
                 onTap: openEditProfile,
+              ),
+
+              const SizedBox(height: 12),
+
+              // ==================================================
+              // MY HORSE
+              // ==================================================
+              profileOption(
+                context: context,
+                icon: Icons.pets_outlined,
+                title: 'My Horse',
+                subtitle: horseName.isEmpty
+                    ? 'Add your horse information'
+                    : 'View $horseName',
+                onTap: openHorseScreen,
               ),
 
               const SizedBox(height: 12),
