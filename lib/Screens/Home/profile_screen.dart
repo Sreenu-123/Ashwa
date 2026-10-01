@@ -1,11 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/api_services.dart';
-
 import '../Profile/settings_screen.dart';
 import '../Profile/edit_profile_screen.dart';
 import '../Profile/achievement_screen.dart';
@@ -27,15 +22,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // PROFILE DATA
   // ============================================================
 
-  String name = 'Rider';
-  String email = 'rider@example.com';
-  String age = '20';
-  String horseName = '';
-  String ridingLevel = 'Beginner';
-
-  String? profileImagePath;
+  Map<String, dynamic>? userData;
 
   bool isLoading = true;
+  String? errorMessage;
+
+  // ============================================================
+  // PROFILE IMAGE CACHE VERSION
+  // ============================================================
+
+  /*
+   * Backend replaces the same image filename.
+   *
+   * Example:
+   * /uploads/profile_images/user_2.jpg
+   *
+   * Flutter may keep the old image in cache.
+   *
+   * Adding ?v=timestamp forces Flutter to request
+   * the latest image from the backend.
+   */
+  int _profileImageVersion = DateTime.now().millisecondsSinceEpoch;
 
   // ============================================================
   // INIT
@@ -44,202 +51,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-
-    loadProfileData();
+    loadProfile();
   }
 
   // ============================================================
-  // LOAD PROFILE DATA
+  // LOAD PROFILE
   // ============================================================
 
-  Future<void> loadProfileData() async {
-    // Load local data first.
-    // This is mainly useful for profile image and offline fallback.
-
-    await loadLocalProfileData();
-
-    // Backend is the source of truth for authenticated user data.
-
-    await loadBackendProfileData();
-
-    if (!mounted) return;
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  // ============================================================
-  // LOAD LOCAL PROFILE DATA
-  // ============================================================
-
-  Future<void> loadLocalProfileData() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final savedName = prefs.getString('profile_name');
-
-    final savedEmail = prefs.getString('profile_email');
-
-    final savedAge = prefs.getString('profile_age');
-
-    final savedRidingLevel = prefs.getString('profile_riding_level');
-
-    // IMPORTANT:
-    // Do NOT load saved horse name here.
-    //
-    // Horse name belongs to the authenticated backend user.
-    //
-    // Loading it from SharedPreferences can cause the previous
-    // user's horse name to appear for another user.
-
-    // We store ONLY the filename in SharedPreferences.
-
-    final savedImageName = prefs.getString('profile_image_name');
-
-    String? imagePath;
-
-    if (savedImageName != null && savedImageName.isNotEmpty) {
-      final directory = await getApplicationSupportDirectory();
-
-      final file = File('${directory.path}/$savedImageName');
-
-      if (await file.exists()) {
-        imagePath = file.path;
-      }
+  Future<void> loadProfile() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
     }
 
-    if (!mounted) return;
-
-    setState(() {
-      // These are only fallback values.
-      // Backend data will overwrite them when available.
-
-      if (savedName != null && savedName.isNotEmpty) {
-        name = savedName;
-      }
-
-      if (savedEmail != null && savedEmail.isNotEmpty) {
-        email = savedEmail;
-      }
-
-      if (savedAge != null && savedAge.isNotEmpty) {
-        age = savedAge;
-      }
-
-      if (savedRidingLevel != null && savedRidingLevel.isNotEmpty) {
-        ridingLevel = savedRidingLevel;
-      }
-
-      profileImagePath = imagePath;
-    });
-
-    debugPrint('Loaded local profile image: $imagePath');
-  }
-
-  // ============================================================
-  // LOAD BACKEND PROFILE DATA
-  // ============================================================
-
-  Future<void> loadBackendProfileData() async {
     try {
-      final currentUser = await ApiService.getCurrentUser();
+      final data = await ApiService.getCurrentUser();
+
+      debugPrint('Profile data: $data');
 
       if (!mounted) return;
 
       setState(() {
-        // Backend is the SOURCE OF TRUTH.
+        userData = Map<String, dynamic>.from(data);
 
-        name = currentUser['full_name']?.toString() ?? '';
+        // Generate a new cache version every time
+        // fresh profile data is loaded.
+        _profileImageVersion = DateTime.now().millisecondsSinceEpoch;
 
-        email = currentUser['email']?.toString() ?? '';
-
-        final backendAge = currentUser['age'];
-
-        age = backendAge?.toString() ?? '';
-
-        // Backend horse name is the source of truth.
-
-        final backendHorseName = currentUser['horse_name'];
-
-        horseName = backendHorseName?.toString() ?? '';
-
-        ridingLevel = currentUser['riding_level']?.toString() ?? '';
+        isLoading = false;
       });
-
-      // Save the current authenticated user's data locally.
-
-      await saveProfileData();
-
-      debugPrint('Backend profile loaded successfully.');
-
-      debugPrint('Current user: ${currentUser['email']}');
-
-      debugPrint('Current horse: ${currentUser['horse_name']}');
     } catch (e) {
-      // Backend failure should not break the profile UI.
-      // Local fallback data can still remain visible.
+      debugPrint('Profile loading failed: $e');
 
-      debugPrint('Failed to load backend profile: $e');
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
     }
   }
 
   // ============================================================
-  // SAVE PROFILE DATA LOCALLY
+  // USER DATA HELPERS
   // ============================================================
 
-  Future<void> saveProfileData() async {
-    final prefs = await SharedPreferences.getInstance();
+  String get name {
+    final value = userData?['full_name']?.toString().trim();
 
-    await prefs.setString('profile_name', name);
+    if (value == null || value.isEmpty) {
+      return 'Rider';
+    }
 
-    await prefs.setString('profile_email', email);
+    return value;
+  }
 
-    await prefs.setString('profile_age', age);
+  String get ridingLevel {
+    final value = userData?['riding_level']?.toString().trim();
 
-    await prefs.setString('profile_horse_name', horseName);
+    if (value == null || value.isEmpty) {
+      return '';
+    }
 
-    await prefs.setString('profile_riding_level', ridingLevel);
+    return value;
+  }
+
+  String get horseName {
+    final value = userData?['horse_name']?.toString().trim();
+
+    if (value == null || value.isEmpty) {
+      return '';
+    }
+
+    return value;
   }
 
   // ============================================================
-  // SAVE PROFILE IMAGE PERMANENTLY
+  // PROFILE IMAGE URL
   // ============================================================
 
-  Future<String?> saveProfileImage(String imagePath) async {
-    try {
-      final sourceFile = File(imagePath);
+  String? get profileImageUrl {
+    final image = userData?['profile_image']?.toString().trim();
 
-      if (!await sourceFile.exists()) {
-        debugPrint('Source image does not exist.');
-
-        return null;
-      }
-
-      final directory = await getApplicationSupportDirectory();
-
-      const fileName = 'ashwa_profile_image.jpg';
-
-      final permanentFile = File('${directory.path}/$fileName');
-
-      final imageBytes = await sourceFile.readAsBytes();
-
-      await permanentFile.writeAsBytes(imageBytes, flush: true);
-
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString('profile_image_name', fileName);
-
-      debugPrint(
-        'Profile image permanently saved: '
-        '${permanentFile.path}',
-      );
-
-      return permanentFile.path;
-    } catch (e) {
-      debugPrint('PROFILE IMAGE SAVE ERROR: $e');
-
+    if (image == null || image.isEmpty) {
       return null;
     }
+
+    String baseUrl;
+
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      baseUrl = image;
+    } else {
+      baseUrl = '${ApiService.baseUrl}$image';
+    }
+
+    // Cache busting
+    return '$baseUrl?v=$_profileImageVersion';
   }
 
   // ============================================================
@@ -249,75 +158,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> openEditProfile() async {
     final result = await Navigator.push(
       context,
-
-      MaterialPageRoute(
-        builder: (context) => EditProfileScreen(
-          name: name,
-
-          email: email,
-
-          age: age,
-
-          horseName: horseName,
-
-          ridingLevel: ridingLevel,
-
-          currentProfileImagePath: profileImagePath,
-        ),
-      ),
+      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
     );
 
-    if (result == null || result is! Map) {
-      return;
+    /*
+     * EditProfileScreen returns true after successful save.
+     *
+     * Reload backend data so:
+     * - name updates
+     * - riding level updates
+     * - horse name updates
+     * - profile image updates
+     */
+
+    if (result == true) {
+      await loadProfile();
     }
-
-    // ----------------------------------------------------------
-    // PROFILE DATA
-    // ----------------------------------------------------------
-
-    setState(() {
-      name = result['name'] ?? name;
-
-      email = result['email'] ?? email;
-
-      age = result['age'] ?? age;
-
-      horseName = result['horseName'] ?? horseName;
-
-      ridingLevel = result['ridingLevel'] ?? ridingLevel;
-    });
-
-    // ----------------------------------------------------------
-    // PROFILE IMAGE
-    // ----------------------------------------------------------
-
-    final returnedImagePath = result['profileImagePath'];
-
-    if (returnedImagePath != null && returnedImagePath.toString().isNotEmpty) {
-      final savedPath = await saveProfileImage(returnedImagePath.toString());
-
-      if (savedPath != null && mounted) {
-        setState(() {
-          profileImagePath = savedPath;
-        });
-      }
-    }
-
-    // ----------------------------------------------------------
-    // SAVE OTHER DATA LOCALLY
-    // ----------------------------------------------------------
-
-    await saveProfileData();
   }
 
   // ============================================================
-  // OPEN HORSE SCREEN
+  // OPEN HORSE
   // ============================================================
 
   Future<void> openHorseScreen() async {
     await Navigator.push(
       context,
-
       MaterialPageRoute(
         builder: (context) => HorseScreen(horseName: horseName),
       ),
@@ -331,7 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> openRideHistory() async {
     await Navigator.push(
       context,
-
       MaterialPageRoute(builder: (context) => const RideHistoryScreen()),
     );
   }
@@ -342,233 +206,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-
-          padding: const EdgeInsets.all(20),
-
-          child: Column(
-            children: [
-              // ==================================================
-              // PROFILE IMAGE
-              // ==================================================
-
-              CircleAvatar(
-                radius: 48,
-
-                backgroundColor: colorScheme.surfaceContainer,
-
-                backgroundImage:
-                    profileImagePath != null &&
-                        File(profileImagePath!).existsSync()
-                    ? FileImage(File(profileImagePath!))
-                    : null,
-
-                child:
-                    profileImagePath == null ||
-                        !File(profileImagePath!).existsSync()
-                    ? Icon(Icons.person, color: colorScheme.onSurface, size: 50)
-                    : null,
-              ),
-
-              const SizedBox(height: 15),
-
-              // ==================================================
-              // NAME
-              // ==================================================
-              Text(
-                name,
-
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-
-                  fontSize: 24,
-
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 5),
-
-              Text(
-                '$ridingLevel Rider',
-
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-
-                  fontSize: 15,
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              // ==================================================
-              // STATS
-              // ==================================================
-              Container(
-                width: double.infinity,
-
-                padding: const EdgeInsets.symmetric(vertical: 20),
-
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainer,
-
-                  borderRadius: BorderRadius.circular(20),
-                ),
-
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-                  children: [
-                    profileStat(context, '12', 'Rides'),
-
-                    profileStat(context, '8', 'Lessons'),
-
-                    profileStat(context, '85%', 'Best Score'),
-
-                    profileStat(context, '7 Days', 'Streaks'),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              // ==================================================
-              // EDIT PROFILE
-              // ==================================================
-              profileOption(
-                context: context,
-
-                icon: Icons.edit_outlined,
-
-                title: 'Edit Profile',
-
-                subtitle: 'Update your rider information',
-
-                onTap: openEditProfile,
-              ),
-
-              const SizedBox(height: 12),
-
-              // ==================================================
-              // MY HORSE
-              // ==================================================
-              profileOption(
-                context: context,
-
-                icon: Icons.pets_outlined,
-
-                title: 'My Horse',
-
-                subtitle: horseName.isEmpty
-                    ? 'Add your horse information'
-                    : 'View $horseName',
-
-                onTap: openHorseScreen,
-              ),
-
-              const SizedBox(height: 12),
-
-              // ==================================================
-              // RIDE HISTORY
-              // ==================================================
-              profileOption(
-                context: context,
-
-                icon: Icons.history_rounded,
-
-                title: 'Ride History',
-
-                subtitle: 'View your completed rides',
-
-                onTap: openRideHistory,
-              ),
-
-              const SizedBox(height: 12),
-
-              // ==================================================
-              // ACHIEVEMENTS
-              // ==================================================
-              profileOption(
-                context: context,
-
-                icon: Icons.emoji_events_outlined,
-
-                title: 'Achievements',
-
-                subtitle: 'View your riding achievements',
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (context) => const AchievementsScreen(),
+        child: RefreshIndicator(
+          onRefresh: loadProfile,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: isLoading
+                ? const SizedBox(
+                    height: 600,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.blue),
                     ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              // ==================================================
-              // SETTINGS
-              // ==================================================
-              profileOption(
-                context: context,
-
-                icon: Icons.settings_outlined,
-
-                title: 'Settings',
-
-                subtitle: 'Manage your app preferences',
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (context) => SettingsScreen(
-                        onThemeChanged: (mode) {
-                          widget.onThemeChanged(mode);
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              // ==================================================
-              // ABOUT
-              // ==================================================
-              profileOption(
-                context: context,
-
-                icon: Icons.info_outline,
-
-                title: 'About ASHWA',
-
-                subtitle: 'Learn more about ASHWA',
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (context) => const AboutAshwaScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
+                  )
+                : errorMessage != null
+                ? _buildErrorState()
+                : _buildProfileContent(),
           ),
         ),
       ),
@@ -576,24 +234,244 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ============================================================
-  // PROFILE STAT
+  // ERROR STATE
   // ============================================================
 
-  Widget profileStat(BuildContext context, String value, String label) {
+  Widget _buildErrorState() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 600,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 55,
+              color: colorScheme.onSurfaceVariant,
+            ),
+
+            const SizedBox(height: 16),
+
+            Text(
+              'Unable to load profile',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              errorMessage ?? 'Something went wrong.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            ElevatedButton(
+              onPressed: loadProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // PROFILE CONTENT
+  // ============================================================
+
+  Widget _buildProfileContent() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       children: [
-        const SizedBox(height: 0),
+        // ========================================================
+        // PROFILE IMAGE
+        // ========================================================
+
+        CircleAvatar(
+          radius: 50,
+          backgroundColor: colorScheme.surfaceContainer,
+          backgroundImage: profileImageUrl != null
+              ? NetworkImage(profileImageUrl!)
+              : null,
+          child: profileImageUrl == null
+              ? Icon(Icons.person, color: colorScheme.onSurface, size: 52)
+              : null,
+        ),
+
+        const SizedBox(height: 15),
+
+        // ========================================================
+        // USER NAME
+        // ========================================================
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 5),
 
         Text(
-          value,
+          ridingLevel.isEmpty ? 'Rider' : '$ridingLevel Rider',
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
+        ),
 
+        const SizedBox(height: 25),
+
+        // ========================================================
+        // STATS
+        // ========================================================
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              profileStat('12', 'Rides'),
+              profileStat('8', 'Lessons'),
+              profileStat('85%', 'Best Score'),
+              profileStat('7 Days', 'Streaks'),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        // ========================================================
+        // EDIT PROFILE
+        // ========================================================
+        profileOption(
+          icon: Icons.edit_outlined,
+          title: 'Edit Profile',
+          subtitle: 'Update your rider information',
+          onTap: openEditProfile,
+        ),
+
+        const SizedBox(height: 12),
+
+        // ========================================================
+        // MY HORSE
+        // ========================================================
+        profileOption(
+          icon: Icons.pets_outlined,
+          title: 'My Horse',
+          subtitle: horseName.isEmpty
+              ? 'Add your horse information'
+              : 'View $horseName',
+          onTap: openHorseScreen,
+        ),
+
+        const SizedBox(height: 12),
+
+        // ========================================================
+        // RIDE HISTORY
+        // ========================================================
+        profileOption(
+          icon: Icons.history_rounded,
+          title: 'Ride History',
+          subtitle: 'View your completed rides',
+          onTap: openRideHistory,
+        ),
+
+        const SizedBox(height: 12),
+
+        // ========================================================
+        // ACHIEVEMENTS
+        // ========================================================
+        profileOption(
+          icon: Icons.emoji_events_outlined,
+          title: 'Achievements',
+          subtitle: 'View your riding achievements',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AchievementsScreen(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // ========================================================
+        // SETTINGS
+        // ========================================================
+        profileOption(
+          icon: Icons.settings_outlined,
+          title: 'Settings',
+          subtitle: 'Manage your app preferences',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    SettingsScreen(onThemeChanged: widget.onThemeChanged),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // ========================================================
+        // ABOUT ASHWA
+        // ========================================================
+        profileOption(
+          icon: Icons.info_outline,
+          title: 'About ASHWA',
+          subtitle: 'Learn more about ASHWA',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AboutAshwaScreen()),
+            );
+          },
+        ),
+
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  // ============================================================
+  // PROFILE STAT
+  // ============================================================
+
+  Widget profileStat(String value, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        Text(
+          value,
           style: const TextStyle(
             color: Colors.blue,
-
             fontSize: 20,
-
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -602,7 +480,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         Text(
           label,
-
           style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
       ],
@@ -614,47 +491,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ============================================================
 
   Widget profileOption({
-    required BuildContext context,
-
     required IconData icon,
-
     required String title,
-
     required String subtitle,
-
     VoidCallback? onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: onTap,
-
       child: Container(
         width: double.infinity,
-
         padding: const EdgeInsets.all(17),
-
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
-
           borderRadius: BorderRadius.circular(18),
-
           border: Border.all(color: colorScheme.outlineVariant),
         ),
-
         child: Row(
           children: [
             Container(
               width: 48,
-
               height: 48,
-
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.15),
-
                 borderRadius: BorderRadius.circular(14),
               ),
-
               child: Icon(icon, color: Colors.blue, size: 24),
             ),
 
@@ -663,16 +525,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   Text(
                     title,
-
                     style: TextStyle(
                       color: colorScheme.onSurface,
-
                       fontSize: 16,
-
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -681,10 +539,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Text(
                     subtitle,
-
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
-
                       fontSize: 13,
                     ),
                   ),
@@ -692,11 +550,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
+            const SizedBox(width: 10),
+
             Icon(
               Icons.arrow_forward_ios,
-
               color: colorScheme.onSurfaceVariant,
-
               size: 16,
             ),
           ],

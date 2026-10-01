@@ -207,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // REGISTER THROUGH OUR FASTAPI BACKEND
       // ==========================================================
 
-      final result = await ApiService.registerUser(
+      await ApiService.registerUser(
         fullName: nameController.text.trim(),
         horseName: horseNameController.text.trim(),
         email: emailController.text.trim(),
@@ -219,6 +219,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
         primaryGoal: selectedPrimaryGoal!,
       );
 
+      // ==========================================================
+      // TEMPORARY LOGIN
+      // ==========================================================
+      // We login temporarily because the profile-image endpoint
+      // requires an authenticated JWT token.
+      // ==========================================================
+
+      await ApiService.loginUser(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+
+      // ==========================================================
+      // UPLOAD PROFILE IMAGE
+      // ==========================================================
+
+      await ApiService.uploadProfileImage(
+        imagePath: selectedProfileImage!.path,
+      );
+
+      // ==========================================================
+      // LOGOUT TEMPORARILY CREATED SESSION
+      // ==========================================================
+      // User must login normally after registration.
+      // ==========================================================
+
+      await ApiService.logout();
+
       if (!mounted) return;
 
       // ==========================================================
@@ -226,11 +254,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // ==========================================================
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result['message']?.toString() ??
-                'Account created successfully! Please login.',
-          ),
+        const SnackBar(
+          content: Text('Account created successfully! Please login.'),
         ),
       );
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
   // ============================================================
@@ -64,7 +65,7 @@ class ApiService {
       // SUCCESS
       // ========================================================
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
 
         return Map<String, dynamic>.from(data);
@@ -85,6 +86,10 @@ class ApiService {
         '(${response.statusCode})',
       );
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
       throw Exception('Registration failed: $e');
     }
   }
@@ -120,7 +125,7 @@ class ApiService {
 
         final accessToken = data['access_token'];
 
-        if (accessToken != null) {
+        if (accessToken != null && accessToken.toString().isNotEmpty) {
           await _storage.write(
             key: 'access_token',
             value: accessToken.toString(),
@@ -145,6 +150,10 @@ class ApiService {
         '(${response.statusCode})',
       );
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
       throw Exception('Login failed: $e');
     }
   }
@@ -210,6 +219,10 @@ class ApiService {
         '(${response.statusCode})',
       );
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
       throw Exception('Failed to get current user: $e');
     }
   }
@@ -287,7 +300,115 @@ class ApiService {
         '(${response.statusCode})',
       );
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
       throw Exception('Profile update failed: $e');
+    }
+  }
+
+  // ============================================================
+  // UPLOAD PROFILE IMAGE
+  // ============================================================
+
+  static Future<Map<String, dynamic>> uploadProfileImage({
+    required String imagePath,
+  }) async {
+    try {
+      // ========================================================
+      // GET JWT TOKEN
+      // ========================================================
+
+      final token = await getAccessToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No access token found');
+      }
+
+      // ========================================================
+      // CREATE MULTIPART REQUEST
+      // ========================================================
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/me/profile-image'),
+      );
+
+      // ========================================================
+      // REQUEST HEADERS
+      // ========================================================
+
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      // ========================================================
+      // ADD PROFILE IMAGE
+      // ========================================================
+      //
+      // We explicitly send the image as:
+      //
+      // image/jpeg
+      //
+      // This fixes the backend error:
+      //
+      // "Only JPG, PNG and WEBP images are allowed"
+      //
+      // ========================================================
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          imagePath,
+          filename: 'profile.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+
+      // ========================================================
+      // SEND REQUEST
+      // ========================================================
+
+      final streamedResponse = await request.send();
+
+      // ========================================================
+      // CONVERT STREAM RESPONSE
+      // ========================================================
+
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        return Map<String, dynamic>.from(data);
+      }
+
+      // ========================================================
+      // BACKEND ERROR
+      // ========================================================
+
+      final errorData = _decodeResponse(response.body);
+
+      if (errorData != null && errorData['detail'] != null) {
+        throw Exception(errorData['detail'].toString());
+      }
+
+      throw Exception(
+        'Profile image upload failed '
+        '(${response.statusCode})',
+      );
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
+      throw Exception('Profile image upload failed: $e');
     }
   }
 
@@ -333,7 +454,7 @@ class ApiService {
       // SUCCESS
       // ========================================================
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
 
         return Map<String, dynamic>.from(data);
@@ -354,6 +475,10 @@ class ApiService {
         '(${response.statusCode})',
       );
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
       throw Exception('Ride session creation failed: $e');
     }
   }
@@ -415,6 +540,10 @@ class ApiService {
         '(${response.statusCode})',
       );
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+
       throw Exception('Failed to get ride history: $e');
     }
   }
@@ -437,6 +566,10 @@ class ApiService {
 
       if (decoded is Map<String, dynamic>) {
         return decoded;
+      }
+
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
       }
 
       return null;
