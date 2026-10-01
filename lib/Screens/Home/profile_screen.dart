@@ -11,6 +11,7 @@ import '../Profile/edit_profile_screen.dart';
 import '../Profile/achievement_screen.dart';
 import '../Profile/about_ashwa_screen.dart';
 import '../Profile/horse_screen.dart';
+import '../Profile/ride_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
@@ -54,9 +55,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> loadProfileData() async {
     // Load local data first.
     // This is mainly useful for profile image and offline fallback.
+
     await loadLocalProfileData();
 
     // Backend is the source of truth for authenticated user data.
+
     await loadBackendProfileData();
 
     if (!mounted) return;
@@ -74,18 +77,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     final savedName = prefs.getString('profile_name');
+
     final savedEmail = prefs.getString('profile_email');
+
     final savedAge = prefs.getString('profile_age');
+
     final savedRidingLevel = prefs.getString('profile_riding_level');
 
     // IMPORTANT:
     // Do NOT load saved horse name here.
     //
     // Horse name belongs to the authenticated backend user.
+    //
     // Loading it from SharedPreferences can cause the previous
     // user's horse name to appear for another user.
 
     // We store ONLY the filename in SharedPreferences.
+
     final savedImageName = prefs.getString('profile_image_name');
 
     String? imagePath;
@@ -150,6 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         age = backendAge?.toString() ?? '';
 
         // Backend horse name is the source of truth.
+
         final backendHorseName = currentUser['horse_name'];
 
         horseName = backendHorseName?.toString() ?? '';
@@ -158,6 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
 
       // Save the current authenticated user's data locally.
+
       await saveProfileData();
 
       debugPrint('Backend profile loaded successfully.');
@@ -239,13 +249,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> openEditProfile() async {
     final result = await Navigator.push(
       context,
+
       MaterialPageRoute(
         builder: (context) => EditProfileScreen(
           name: name,
+
           email: email,
+
           age: age,
+
           horseName: horseName,
+
           ridingLevel: ridingLevel,
+
           currentProfileImagePath: profileImagePath,
         ),
       ),
@@ -261,9 +277,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() {
       name = result['name'] ?? name;
+
       email = result['email'] ?? email;
+
       age = result['age'] ?? age;
+
       horseName = result['horseName'] ?? horseName;
+
       ridingLevel = result['ridingLevel'] ?? ridingLevel;
     });
 
@@ -297,9 +317,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> openHorseScreen() async {
     await Navigator.push(
       context,
+
       MaterialPageRoute(
         builder: (context) => HorseScreen(horseName: horseName),
       ),
+    );
+  }
+
+  // ============================================================
+  // OPEN RIDE HISTORY
+  // ============================================================
+
+  Future<void> openRideHistory() async {
+    await Navigator.push(
+      context,
+
+      MaterialPageRoute(builder: (context) => const RideHistoryScreen()),
     );
   }
 
@@ -313,10 +346,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+
           padding: const EdgeInsets.all(20),
+
           child: Column(
             children: [
               // ==================================================
@@ -325,12 +361,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               CircleAvatar(
                 radius: 48,
+
                 backgroundColor: colorScheme.surfaceContainer,
+
                 backgroundImage:
                     profileImagePath != null &&
                         File(profileImagePath!).existsSync()
                     ? FileImage(File(profileImagePath!))
                     : null,
+
                 child:
                     profileImagePath == null ||
                         !File(profileImagePath!).existsSync()
@@ -345,9 +384,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               Text(
                 name,
+
                 style: TextStyle(
                   color: colorScheme.onSurface,
+
                   fontSize: 24,
+
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -356,8 +398,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               Text(
                 '$ridingLevel Rider',
+
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
+
                   fontSize: 15,
                 ),
               ),
@@ -369,17 +413,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               Container(
                 width: double.infinity,
+
                 padding: const EdgeInsets.symmetric(vertical: 20),
+
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainer,
+
                   borderRadius: BorderRadius.circular(20),
                 ),
+
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+
                   children: [
                     profileStat(context, '12', 'Rides'),
+
                     profileStat(context, '8', 'Lessons'),
+
                     profileStat(context, '85%', 'Best Score'),
+
                     profileStat(context, '7 Days', 'Streaks'),
                   ],
                 ),
@@ -392,9 +444,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               profileOption(
                 context: context,
+
                 icon: Icons.edit_outlined,
+
                 title: 'Edit Profile',
+
                 subtitle: 'Update your rider information',
+
                 onTap: openEditProfile,
               ),
 
@@ -405,12 +461,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               profileOption(
                 context: context,
+
                 icon: Icons.pets_outlined,
+
                 title: 'My Horse',
+
                 subtitle: horseName.isEmpty
                     ? 'Add your horse information'
                     : 'View $horseName',
+
                 onTap: openHorseScreen,
+              ),
+
+              const SizedBox(height: 12),
+
+              // ==================================================
+              // RIDE HISTORY
+              // ==================================================
+              profileOption(
+                context: context,
+
+                icon: Icons.history_rounded,
+
+                title: 'Ride History',
+
+                subtitle: 'View your completed rides',
+
+                onTap: openRideHistory,
               ),
 
               const SizedBox(height: 12),
@@ -420,12 +497,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               profileOption(
                 context: context,
+
                 icon: Icons.emoji_events_outlined,
+
                 title: 'Achievements',
+
                 subtitle: 'View your riding achievements',
+
                 onTap: () {
                   Navigator.push(
                     context,
+
                     MaterialPageRoute(
                       builder: (context) => const AchievementsScreen(),
                     ),
@@ -440,12 +522,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               profileOption(
                 context: context,
+
                 icon: Icons.settings_outlined,
+
                 title: 'Settings',
+
                 subtitle: 'Manage your app preferences',
+
                 onTap: () {
                   Navigator.push(
                     context,
+
                     MaterialPageRoute(
                       builder: (context) => SettingsScreen(
                         onThemeChanged: (mode) {
@@ -464,12 +551,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // ==================================================
               profileOption(
                 context: context,
+
                 icon: Icons.info_outline,
+
                 title: 'About ASHWA',
+
                 subtitle: 'Learn more about ASHWA',
+
                 onTap: () {
                   Navigator.push(
                     context,
+
                     MaterialPageRoute(
                       builder: (context) => const AboutAshwaScreen(),
                     ),
@@ -496,9 +588,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         Text(
           value,
+
           style: const TextStyle(
             color: Colors.blue,
+
             fontSize: 20,
+
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -507,6 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         Text(
           label,
+
           style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
       ],
@@ -519,32 +615,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget profileOption({
     required BuildContext context,
+
     required IconData icon,
+
     required String title,
+
     required String subtitle,
+
     VoidCallback? onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: onTap,
+
       child: Container(
         width: double.infinity,
+
         padding: const EdgeInsets.all(17),
+
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
+
           borderRadius: BorderRadius.circular(18),
+
           border: Border.all(color: colorScheme.outlineVariant),
         ),
+
         child: Row(
           children: [
             Container(
               width: 48,
+
               height: 48,
+
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.15),
+
                 borderRadius: BorderRadius.circular(14),
               ),
+
               child: Icon(icon, color: Colors.blue, size: 24),
             ),
 
@@ -553,12 +663,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+
                 children: [
                   Text(
                     title,
+
                     style: TextStyle(
                       color: colorScheme.onSurface,
+
                       fontSize: 16,
+
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -567,8 +681,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Text(
                     subtitle,
+
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant,
+
                       fontSize: 13,
                     ),
                   ),
@@ -578,7 +694,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             Icon(
               Icons.arrow_forward_ios,
+
               color: colorScheme.onSurfaceVariant,
+
               size: 16,
             ),
           ],

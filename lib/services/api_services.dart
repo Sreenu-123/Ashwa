@@ -359,6 +359,67 @@ class ApiService {
   }
 
   // ============================================================
+  // GET RIDE HISTORY
+  // ============================================================
+
+  static Future<List<Map<String, dynamic>>> getRideHistory() async {
+    try {
+      // ========================================================
+      // GET STORED JWT TOKEN
+      // ========================================================
+
+      final token = await getAccessToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No access token found');
+      }
+
+      // ========================================================
+      // CALL GET /RIDES
+      // ========================================================
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/rides'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data is List) {
+          return data.map((ride) => Map<String, dynamic>.from(ride)).toList();
+        }
+
+        throw Exception('Invalid ride history response');
+      }
+
+      // ========================================================
+      // BACKEND ERROR
+      // ========================================================
+
+      final errorData = _decodeResponse(response.body);
+
+      if (errorData != null && errorData['detail'] != null) {
+        throw Exception(errorData['detail'].toString());
+      }
+
+      throw Exception(
+        'Failed to get ride history '
+        '(${response.statusCode})',
+      );
+    } catch (e) {
+      throw Exception('Failed to get ride history: $e');
+    }
+  }
+
+  // ============================================================
   // LOGOUT
   // ============================================================
 
