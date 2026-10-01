@@ -292,6 +292,73 @@ class ApiService {
   }
 
   // ============================================================
+  // CREATE RIDE SESSION
+  // ============================================================
+
+  static Future<Map<String, dynamic>> createRideSession({
+    required String horseName,
+    required String discipline,
+    required int durationSeconds,
+  }) async {
+    try {
+      // ========================================================
+      // GET STORED JWT TOKEN
+      // ========================================================
+
+      final token = await getAccessToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No access token found');
+      }
+
+      // ========================================================
+      // CALL POST /RIDES
+      // ========================================================
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/rides'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'horse_name': horseName.trim(),
+          'discipline': discipline,
+          'duration_seconds': durationSeconds,
+        }),
+      );
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        return Map<String, dynamic>.from(data);
+      }
+
+      // ========================================================
+      // BACKEND ERROR
+      // ========================================================
+
+      final errorData = _decodeResponse(response.body);
+
+      if (errorData != null && errorData['detail'] != null) {
+        throw Exception(errorData['detail'].toString());
+      }
+
+      throw Exception(
+        'Ride session creation failed '
+        '(${response.statusCode})',
+      );
+    } catch (e) {
+      throw Exception('Ride session creation failed: $e');
+    }
+  }
+
+  // ============================================================
   // LOGOUT
   // ============================================================
 

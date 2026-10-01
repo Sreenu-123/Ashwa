@@ -21,6 +21,7 @@ class _RideScreenState extends State<RideScreen> {
 
   bool isLoadingHorse = true;
   bool isRideActive = false;
+  bool isSavingRide = false;
 
   // ============================================================
   // RIDE TIMER
@@ -117,21 +118,90 @@ class _RideScreenState extends State<RideScreen> {
   // END RIDE
   // ============================================================
 
-  void endRide() {
+  Future<void> endRide() async {
     rideTimer?.cancel();
 
-    setState(() {
-      isRideActive = false;
-    });
+    if (rideSeconds <= 0) {
+      if (!mounted) return;
 
-    showRideSummary();
+      setState(() {
+        isRideActive = false;
+      });
+
+      showMessage('Ride duration is too short to save.');
+
+      return;
+    }
+
+    if (selectedDiscipline == null || horseName.isEmpty) {
+      if (!mounted) return;
+
+      setState(() {
+        isRideActive = false;
+      });
+
+      showMessage('Ride information is incomplete.');
+
+      return;
+    }
+
+    final completedDuration = rideSeconds;
+    final completedHorse = horseName;
+    final completedDiscipline = selectedDiscipline!;
+
+    if (mounted) {
+      setState(() {
+        isRideActive = false;
+        isSavingRide = true;
+      });
+    }
+
+    try {
+      // ========================================================
+      // SAVE RIDE TO BACKEND
+      // ========================================================
+
+      await ApiService.createRideSession(
+        horseName: completedHorse,
+        discipline: completedDiscipline,
+        durationSeconds: completedDuration,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        isSavingRide = false;
+      });
+
+      // ========================================================
+      // SHOW SUMMARY
+      // ========================================================
+
+      showRideSummary(completedHorse, completedDiscipline, completedDuration);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isSavingRide = false;
+      });
+
+      debugPrint('Failed to save ride: $e');
+
+      showMessage('Ride completed, but could not be saved.');
+    }
   }
 
   // ============================================================
   // RIDE SUMMARY
   // ============================================================
 
-  void showRideSummary() {
+  void showRideSummary(
+    String completedHorse,
+    String completedDiscipline,
+    int completedDuration,
+  ) {
+    final durationText = formatDuration(completedDuration);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -161,6 +231,7 @@ class _RideScreenState extends State<RideScreen> {
 
                 const SizedBox(height: 24),
 
+                // SUCCESS ICON
                 const Icon(
                   Icons.check_circle_outline,
                   color: Colors.blue,
@@ -169,6 +240,7 @@ class _RideScreenState extends State<RideScreen> {
 
                 const SizedBox(height: 15),
 
+                // TITLE
                 Text(
                   'Ride Completed',
                   style: TextStyle(
@@ -191,7 +263,12 @@ class _RideScreenState extends State<RideScreen> {
 
                 const SizedBox(height: 25),
 
-                summaryRow(context, Icons.pets_outlined, 'Horse', horseName),
+                summaryRow(
+                  context,
+                  Icons.pets_outlined,
+                  'Horse',
+                  completedHorse,
+                ),
 
                 const SizedBox(height: 12),
 
@@ -199,7 +276,7 @@ class _RideScreenState extends State<RideScreen> {
                   context,
                   Icons.sports_score_outlined,
                   'Discipline',
-                  selectedDiscipline ?? '-',
+                  completedDiscipline,
                 ),
 
                 const SizedBox(height: 12),
@@ -208,11 +285,12 @@ class _RideScreenState extends State<RideScreen> {
                   context,
                   Icons.timer_outlined,
                   'Duration',
-                  formattedTime,
+                  durationText,
                 ),
 
                 const SizedBox(height: 25),
 
+                // DONE BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -250,19 +328,27 @@ class _RideScreenState extends State<RideScreen> {
   }
 
   // ============================================================
-  // FORMAT TIME
+  // FORMAT DURATION
   // ============================================================
 
-  String get formattedTime {
-    final hours = rideSeconds ~/ 3600;
+  String formatDuration(int secondsTotal) {
+    final hours = secondsTotal ~/ 3600;
 
-    final minutes = (rideSeconds % 3600) ~/ 60;
+    final minutes = (secondsTotal % 3600) ~/ 60;
 
-    final seconds = rideSeconds % 60;
+    final seconds = secondsTotal % 60;
 
     return '${hours.toString().padLeft(2, '0')}:'
         '${minutes.toString().padLeft(2, '0')}:'
         '${seconds.toString().padLeft(2, '0')}';
+  }
+
+  // ============================================================
+  // CURRENT FORMATTED TIME
+  // ============================================================
+
+  String get formattedTime {
+    return formatDuration(rideSeconds);
   }
 
   // ============================================================
@@ -475,38 +561,51 @@ class _RideScreenState extends State<RideScreen> {
                 height: 60,
 
                 child: ElevatedButton(
-                  onPressed: isRideActive ? endRide : startRide,
+                  onPressed: isSavingRide
+                      ? null
+                      : isRideActive
+                      ? endRide
+                      : startRide,
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isRideActive ? Colors.red : Colors.blue,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.blue.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
 
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: isSavingRide
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isRideActive
+                                  ? Icons.stop_rounded
+                                  : Icons.play_arrow_rounded,
+                            ),
 
-                    children: [
-                      Icon(
-                        isRideActive
-                            ? Icons.stop_rounded
-                            : Icons.play_arrow_rounded,
-                      ),
+                            const SizedBox(width: 8),
 
-                      const SizedBox(width: 8),
-
-                      Text(
-                        isRideActive ? 'End Ride' : 'Start AI Ride',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                            Text(
+                              isRideActive ? 'End Ride' : 'Start AI Ride',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
 
@@ -595,9 +694,9 @@ class _RideScreenState extends State<RideScreen> {
 
           const SizedBox(height: 20),
 
-          // ==================================================
+          // ======================================================
           // HORSE
-          // ==================================================
+          // ======================================================
           Text(
             'Horse',
             style: TextStyle(
@@ -651,9 +750,9 @@ class _RideScreenState extends State<RideScreen> {
 
           const SizedBox(height: 18),
 
-          // ==================================================
+          // ======================================================
           // DISCIPLINE
-          // ==================================================
+          // ======================================================
           Text(
             'Discipline',
             style: TextStyle(
@@ -666,7 +765,7 @@ class _RideScreenState extends State<RideScreen> {
           const SizedBox(height: 8),
 
           DropdownButtonFormField<String>(
-            value: selectedDiscipline,
+            initialValue: selectedDiscipline,
 
             isExpanded: true,
 
@@ -702,7 +801,7 @@ class _RideScreenState extends State<RideScreen> {
 
             items: disciplineOptions
                 .map(
-                  (discipline) => DropdownMenuItem(
+                  (discipline) => DropdownMenuItem<String>(
                     value: discipline,
                     child: Text(
                       discipline,
@@ -879,6 +978,7 @@ class _RideScreenState extends State<RideScreen> {
           ),
         ),
 
+        // RECORDING BADGE
         Positioned(
           top: 16,
           left: 16,
